@@ -90,15 +90,17 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {
 
 	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
 	const shapeParts = [];
-	const usePrimitive = originalShape && (originalShape.kind === 'circle' || originalShape.kind === 'ellipse') && originalShape.shapeParams;
-	if (usePrimitive) {
+	const useCircle = originalShape && originalShape.kind === 'circle' && originalShape.shapeParams;
+	const useEllipse = originalShape && originalShape.kind === 'ellipse' && originalShape.shapeParams;
+	const useRect = originalShape && originalShape.kind === 'rect';
+	if (useCircle || useEllipse) {
 		const bBox = bboxOfPoints(baseC);
 		const mBox = bboxOfPoints(mirrorC);
 		const bcx = (bBox.minX + bBox.maxX) / 2;
 		const bcy = (bBox.minY + bBox.maxY) / 2;
 		const mcx = (mBox.minX + mBox.maxX) / 2;
 		const mcy = (mBox.minY + mBox.maxY) / 2;
-		if (originalShape.kind === 'circle') {
+		if (useCircle) {
 			const { r } = originalShape.shapeParams;
 			shapeParts.push(`<circle cx="${bcx}" cy="${bcy}" r="${r}" ${baseStyle}/>`);
 			shapeParts.push(`<circle cx="${mcx}" cy="${mcy}" r="${r}" ${baseStyle}/>`);
@@ -107,6 +109,16 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {
 			shapeParts.push(`<ellipse cx="${bcx}" cy="${bcy}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
 			shapeParts.push(`<ellipse cx="${mcx}" cy="${mcy}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
 		}
+	} else if (useRect) {
+		const bBox = bboxOfPoints(baseC);
+		const mBox = bboxOfPoints(mirrorC);
+		const bw = bBox.maxX - bBox.minX;
+		const bh = bBox.maxY - bBox.minY;
+		const mw = mBox.maxX - mBox.minX;
+		const mh = mBox.maxY - mBox.minY;
+		// Render axis-aligned rects matching the aligned base/mirror footprints
+		shapeParts.push(`<rect x="${bBox.minX}" y="${bBox.minY}" width="${bw}" height="${bh}" ${baseStyle}/>`);
+		shapeParts.push(`<rect x="${mBox.minX}" y="${mBox.minY}" width="${mw}" height="${mh}" ${baseStyle}/>`);
 	} else {
 		shapeParts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
 		shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);

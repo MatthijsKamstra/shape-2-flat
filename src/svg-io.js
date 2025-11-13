@@ -101,10 +101,15 @@ function extractPathInfo(svgContent) {
 			const y = parseFloat(node.getAttribute("y") || 0);
 			const w = parseFloat(node.getAttribute("width"));
 			const h = parseFloat(node.getAttribute("height"));
+			const rx = node.getAttribute("rx");
+			const ry = node.getAttribute("ry");
 			if (!isNaN(w) && !isNaN(h)) {
 				let d = `M${x},${y} L${x + w},${y} L${x + w},${y + h} L${x},${y + h} Z`;
 				d = applyCtmToPathD(d, node);
-				return { d, kind: "rect" };
+				const shapeParams = { x, y, width: w, height: h };
+				if (rx != null) shapeParams.rx = parseFloat(rx);
+				if (ry != null) shapeParams.ry = parseFloat(ry);
+				return { d, kind: "rect", shapeParams };
 			}
 		}
 		// circle
