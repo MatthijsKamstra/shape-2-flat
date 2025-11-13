@@ -130,32 +130,57 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {
 		shapeParts.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" ${extrudeStyle}/>`);
 	}
 
-	// Glue tabs: 7 mm with 45° angled ends on all four sides; folding lines separated
+	// Glue tabs: 7 mm with 45° angled ends on all four sides; for circle/ellipse use saw-tooth on left/right seams
 	const tabW = 7;
 	const foldStyle = 'fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"';
 	const glueParts = [];
 	const foldParts = [];
+	const isCurvy = originalShape && (originalShape.kind === 'circle' || originalShape.kind === 'ellipse');
+	const toothPitch = tabW; // spacing along seam for saw-tooth
 	for (const r of stackedC) {
-		// Left tab (vertical)
+		// Left tab (vertical seam with base)
 		{
 			const xFold = r.x;
-			const xOut = r.x - tabW;
 			const yTop = r.y;
 			const yBot = r.y + r.h;
-			const vDelta = Math.min(tabW, r.h / 2);
-			const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
-			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			const xOut = r.x - tabW;
+			if (isCurvy) {
+				// Saw-tooth triangles along the seam
+				let y0 = yTop;
+				while (y0 < yBot - 1e-6) {
+					const y1 = Math.min(y0 + toothPitch, yBot);
+					const ym = (y0 + y1) / 2;
+					const d = `M ${xFold},${y0} L ${xOut},${ym} L ${xFold},${y1} Z`;
+					glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+					y0 = y1;
+				}
+			} else {
+				const vDelta = Math.min(tabW, r.h / 2);
+				const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
+				glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			}
 			foldParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
 		}
-		// Right tab (vertical)
+		// Right tab (vertical seam with mirror)
 		{
 			const xFold = r.x + r.w;
-			const xOut = r.x + r.w + tabW;
 			const yTop = r.y;
 			const yBot = r.y + r.h;
-			const vDelta = Math.min(tabW, r.h / 2);
-			const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
-			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			const xOut = r.x + r.w + tabW;
+			if (isCurvy) {
+				let y0 = yTop;
+				while (y0 < yBot - 1e-6) {
+					const y1 = Math.min(y0 + toothPitch, yBot);
+					const ym = (y0 + y1) / 2;
+					const d = `M ${xFold},${y0} L ${xOut},${ym} L ${xFold},${y1} Z`;
+					glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+					y0 = y1;
+				}
+			} else {
+				const vDelta = Math.min(tabW, r.h / 2);
+				const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
+				glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			}
 			foldParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
 		}
 		// Top tab (horizontal)
