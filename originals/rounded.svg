@@ -25,9 +25,9 @@
    inkscape:pageopacity="0.0"
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
-   inkscape:zoom="1.1119863"
-   inkscape:cx="574.64737"
-   inkscape:cy="389.39329"
+   inkscape:zoom="0.27799657"
+   inkscape:cx="1251.814"
+   inkscape:cy="1446.061"
    inkscape:window-width="2560"
    inkscape:window-height="1027"
    inkscape:window-x="1728"
@@ -35,8 +35,13 @@
    inkscape:window-maximized="0"
    inkscape:current-layer="svg1"
    inkscape:document-units="mm" />
-    
-<path
-   id="path2"
-   style="vector-effect:non-scaling-stroke;fill:#0020ff;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2, 1;-inkscape-stroke:hairline;paint-order:fill markers stroke"
-   d="M 88.988884 19.12028 A 49.741669 49.741669 0 0 0 39.247217 68.861947 L 39.247217 145.002 A 49.741669 49.741669 0 0 0 88.988884 194.74367 A 49.741669 49.741669 0 0 0 138.73055 145.002 A 49.741669 49.741669 0 0 0 138.73055 144.97461 L 138.73055 68.889852 A 49.741669 49.741669 0 0 0 138.73055 68.861947 A 49.741669 49.741669 0 0 0 88.988884 19.12028 z " /></svg>
+    <g
+   transform="matrix(0.08283237,-0.00942766,0.00942766,0.08283237,-93.433294,-18.424105)"
+   id="g1"
+   style="fill:#ff0000;fill-opacity:1">
+        <path
+   d="m 1376.255,828.5 c 0,-106.655 86.59,-193.245 193.245,-193.245 106.655,0 193.245,86.59 193.245,193.245 0,14.328 -1.563,28.295 -4.527,41.738 l -52.768,486.485 -136.47,-15.532 -178.509,-179.979 -13.502,-316 c -0.472,-5.508 -0.714,-11.082 -0.714,-16.712 z"
+   style="fill:#ff0000;fill-opacity:1;stroke:#292929;stroke-width:4.17px"
+   id="path1" />
+    </g>
+</svg>

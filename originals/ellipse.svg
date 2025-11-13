@@ -7,7 +7,7 @@
    xml:space="preserve"
    style="clip-rule:evenodd;fill-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5"
    id="svg1"
-   sodipodi:docname="rounded.svg"
+   sodipodi:docname="circle.svg"
    inkscape:export-filename="rounded_plain.svg"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
@@ -25,9 +25,9 @@
    inkscape:pageopacity="0.0"
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
-   inkscape:zoom="1.1119863"
-   inkscape:cx="574.64737"
-   inkscape:cy="389.39329"
+   inkscape:zoom="1.1726401"
+   inkscape:cx="574.77141"
+   inkscape:cy="389.71889"
    inkscape:window-width="2560"
    inkscape:window-height="1027"
    inkscape:window-x="1728"
@@ -36,7 +36,10 @@
    inkscape:current-layer="svg1"
    inkscape:document-units="mm" />
     
-<path
-   id="path2"
-   style="vector-effect:non-scaling-stroke;fill:#0020ff;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2, 1;-inkscape-stroke:hairline;paint-order:fill markers stroke"
-   d="M 88.988884 19.12028 A 49.741669 49.741669 0 0 0 39.247217 68.861947 L 39.247217 145.002 A 49.741669 49.741669 0 0 0 88.988884 194.74367 A 49.741669 49.741669 0 0 0 138.73055 145.002 A 49.741669 49.741669 0 0 0 138.73055 144.97461 L 138.73055 68.889852 A 49.741669 49.741669 0 0 0 138.73055 68.861947 A 49.741669 49.741669 0 0 0 88.988884 19.12028 z " /></svg>
+<ellipse
+   style="vector-effect:non-scaling-stroke;fill:#00ff00;stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2, 1;-inkscape-stroke:hairline;paint-order:fill markers stroke"
+   id="path1"
+   cx="105.03098"
+   cy="59.453625"
+   rx="43.885124"
+   ry="31.926708" /></svg>
