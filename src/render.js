@@ -27,7 +27,7 @@ function dashedLine(x1, y1, x2, y2) {
 	return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#00a" stroke-width="0.5" stroke-dasharray="4,3"/>`;
 }
 
-function renderNetSvg(net, { margin = 10, unit = "px", page } = {}) {
+function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {}) {
 	const gap = 0; // connect parts without gaps
 	// Arrange: base (left), side stack (center), mirrored base (right)
 	// vertical stack height
@@ -90,8 +90,27 @@ function renderNetSvg(net, { margin = 10, unit = "px", page } = {}) {
 
 	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
 	const shapeParts = [];
-	shapeParts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
-	shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);
+	const usePrimitive = originalShape && (originalShape.kind === 'circle' || originalShape.kind === 'ellipse') && originalShape.shapeParams;
+	if (usePrimitive) {
+		const bBox = bboxOfPoints(baseC);
+		const mBox = bboxOfPoints(mirrorC);
+		const bcx = (bBox.minX + bBox.maxX) / 2;
+		const bcy = (bBox.minY + bBox.maxY) / 2;
+		const mcx = (mBox.minX + mBox.maxX) / 2;
+		const mcy = (mBox.minY + mBox.maxY) / 2;
+		if (originalShape.kind === 'circle') {
+			const { r } = originalShape.shapeParams;
+			shapeParts.push(`<circle cx="${bcx}" cy="${bcy}" r="${r}" ${baseStyle}/>`);
+			shapeParts.push(`<circle cx="${mcx}" cy="${mcy}" r="${r}" ${baseStyle}/>`);
+		} else {
+			const { rx, ry } = originalShape.shapeParams;
+			shapeParts.push(`<ellipse cx="${bcx}" cy="${bcy}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
+			shapeParts.push(`<ellipse cx="${mcx}" cy="${mcy}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
+		}
+	} else {
+		shapeParts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
+		shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);
+	}
 	for (const r of stackedC) {
 		shapeParts.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" ${extrudeStyle}/>`);
 	}

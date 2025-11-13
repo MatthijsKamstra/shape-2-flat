@@ -46,7 +46,7 @@ function mirrorPolygonHoriz(points) {
 	return points.map(([x, y]) => [2 * c[0] - x, y]);
 }
 
-function makeNet(poly, depth, { minSegment = 0.5 } = {}) {
+function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 	// 1) Rotate polygon so the longest edge becomes vertical
 	const edgeData = [];
 	for (let i = 0; i < poly.length; i++) {
@@ -71,17 +71,35 @@ function makeNet(poly, depth, { minSegment = 0.5 } = {}) {
 		edgesOrdered.push({ idx, a, b, h });
 	}
 
+	// Determine side rectangle heights
+	let heights = [];
+	if (Array.isArray(edgeLengths) && edgeLengths.length > 0) {
+		// Reorder provided lengths to start from longest straight edge (edgesOrdered[0].h)
+		const target = edgesOrdered[0].h;
+		let startIdx = 0;
+		let bestDiff = Infinity;
+		for (let i = 0; i < edgeLengths.length; i++) {
+			const diff = Math.abs(edgeLengths[i].length - target);
+			if (edgeLengths[i].type === 'line' && diff < bestDiff) { bestDiff = diff; startIdx = i; }
+		}
+		const reordered = edgeLengths.slice(startIdx).concat(edgeLengths.slice(0, startIdx));
+		heights = reordered.map(s => s.length);
+	} else {
+		// Default from rotated polygon edges
+		heights = edgesOrdered.map(e => e.h);
+	}
+
 	// Merge small segments into previous if below threshold
-	const merged = [];
-	for (const e of edgesOrdered) {
-		if (merged.length === 0) { merged.push({ ...e }); continue; }
-		if (e.h < minSegment) {
-			merged[merged.length - 1].h += e.h;
+	const mergedH = [];
+	for (const h of heights) {
+		if (mergedH.length === 0) { mergedH.push(h); continue; }
+		if (h < minSegment) {
+			mergedH[mergedH.length - 1] += h;
 		} else {
-			merged.push({ ...e });
+			mergedH.push(h);
 		}
 	}
-	const sideRects = merged.map(e => ({ w: depth, h: e.h }));
+	const sideRects = mergedH.map(h => ({ w: depth, h }));
 
 	// Alignment data for the first (longest) edge on base
 	const firstEdge = edgesOrdered[0];

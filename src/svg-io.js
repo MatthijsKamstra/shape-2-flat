@@ -69,19 +69,32 @@ function applyCtmToPathD(d, node) {
 	return SvgPath(d).transform(`matrix(${M.join(" ")})`).toString();
 }
 
-function extractPathD(svgContent) {
-	if (!svgContent) return null;
+function circleToPathD(cx, cy, r) {
+	const x1 = cx + r, y1 = cy;
+	const x2 = cx - r, y2 = cy;
+	// two arcs to form a full circle
+	return `M ${x1},${y1} A ${r} ${r} 0 1 0 ${x2} ${y2} A ${r} ${r} 0 1 0 ${x1} ${y1} Z`;
+}
+
+function ellipseToPathD(cx, cy, rx, ry) {
+	const x1 = cx + rx, y1 = cy;
+	const x2 = cx - rx, y2 = cy;
+	return `M ${x1},${y1} A ${rx} ${ry} 0 1 0 ${x2} ${y2} A ${rx} ${ry} 0 1 0 ${x1} ${y1} Z`;
+}
+
+function extractPathInfo(svgContent) {
+	if (!svgContent) return { d: null, kind: null };
 	try {
 		const doc = new DOMParser().parseFromString(svgContent, "text/xml");
-		// prefer explicit path; fallback to rect, polygon, polyline
 		const select = xpath.useNamespaces({ svg: "http://www.w3.org/2000/svg" });
+		// prefer explicit path
 		let node = select("//svg:path[1]", doc)[0];
 		if (node && node.getAttribute) {
 			let d = node.getAttribute("d") || "";
 			d = applyCtmToPathD(d, node);
-			return d;
+			return { d, kind: "path" };
 		}
-		// rect to path
+		// rect
 		node = select("//svg:rect[1]", doc)[0];
 		if (node) {
 			const x = parseFloat(node.getAttribute("x") || 0);
@@ -91,7 +104,32 @@ function extractPathD(svgContent) {
 			if (!isNaN(w) && !isNaN(h)) {
 				let d = `M${x},${y} L${x + w},${y} L${x + w},${y + h} L${x},${y + h} Z`;
 				d = applyCtmToPathD(d, node);
-				return d;
+				return { d, kind: "rect" };
+			}
+		}
+		// circle
+		node = select("//svg:circle[1]", doc)[0];
+		if (node) {
+			const cx = parseFloat(node.getAttribute("cx") || 0);
+			const cy = parseFloat(node.getAttribute("cy") || 0);
+			const r = parseFloat(node.getAttribute("r"));
+			if (!isNaN(r)) {
+				let d = circleToPathD(cx, cy, r);
+				d = applyCtmToPathD(d, node);
+				return { d, kind: "circle", shapeParams: { cx, cy, r } };
+			}
+		}
+		// ellipse
+		node = select("//svg:ellipse[1]", doc)[0];
+		if (node) {
+			const cx = parseFloat(node.getAttribute("cx") || 0);
+			const cy = parseFloat(node.getAttribute("cy") || 0);
+			const rx = parseFloat(node.getAttribute("rx"));
+			const ry = parseFloat(node.getAttribute("ry"));
+			if (!isNaN(rx) && !isNaN(ry)) {
+				let d = ellipseToPathD(cx, cy, rx, ry);
+				d = applyCtmToPathD(d, node);
+				return { d, kind: "ellipse", shapeParams: { cx, cy, rx, ry } };
 			}
 		}
 		// polygon/polyline
@@ -106,13 +144,18 @@ function extractPathD(svgContent) {
 				const closed = node.tagName === "polygon" ? " Z" : "";
 				let d = path + closed;
 				d = applyCtmToPathD(d, node);
-				return d;
+				return { d, kind: node.tagName };
 			}
 		}
-		return null;
+		return { d: null, kind: null };
 	} catch (e) {
-		return null;
+		return { d: null, kind: null };
 	}
 }
 
-module.exports = { extractPathD };
+function extractPathD(svgContent) {
+	const { d } = extractPathInfo(svgContent);
+	return d;
+}
+
+module.exports = { extractPathD, extractPathInfo };
