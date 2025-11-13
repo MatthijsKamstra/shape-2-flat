@@ -50,7 +50,7 @@ async function generateNetFromSvg({ svgContent, pathData, depth = 50, height, sc
 		}
 	} catch { }
 	const net = makeNet(poly, depthVal, { minSegment, edgeLengths });
-	const { svg, meta } = renderNetSvg(net, { margin, unit, page: { width: 210, height: 297 }, originalShape: info });
+	const { svg, meta } = renderNetSvg(net, { margin, unit, page: { width: 210, height: 297 }, originalShape: info, scale });
 	return { svg, meta };
 }
 

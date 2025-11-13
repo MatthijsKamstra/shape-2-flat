@@ -27,7 +27,7 @@ function dashedLine(x1, y1, x2, y2) {
 	return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#00a" stroke-width="0.5" stroke-dasharray="4,3"/>`;
 }
 
-function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {}) {
+function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scale = 1 } = {}) {
 	const gap = 0; // connect parts without gaps
 	// Arrange: base (left), side stack (center), mirrored base (right)
 	// vertical stack height
@@ -122,6 +122,16 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {
 		// Render axis-aligned rects matching the aligned base/mirror footprints
 		shapeParts.push(`<rect x="${bBox.minX}" y="${bBox.minY}" width="${bw}" height="${bh}" ${baseStyle}/>`);
 		shapeParts.push(`<rect x="${mBox.minX}" y="${mBox.minY}" width="${mw}" height="${mh}" ${baseStyle}/>`);
+	} else if (originalShape && originalShape.kind === 'path' && originalShape.d && net.rotation) {
+		const deg = (net.rotation.angle * 180) / Math.PI;
+		const c0x = net.rotation.centroidOriginal[0] * scale;
+		const c0y = net.rotation.centroidOriginal[1] * scale;
+		const cBx = net.rotation.centroidBase[0];
+		const cBy = net.rotation.centroidBase[1];
+		const tBase = `translate(${dx},${dy}) translate(${baseOffsetX},${baseOffsetY}) rotate(${deg} ${c0x} ${c0y}) scale(${scale} ${scale})`;
+		const tMirror = `translate(${dx},${dy}) translate(${mirrorOffsetX},${mirrorOffsetY}) translate(${cBx},${cBy}) scale(-1 1) translate(${-cBx},${-cBy}) rotate(${deg} ${c0x} ${c0y}) scale(${scale} ${scale})`;
+		shapeParts.push(`<path d="${originalShape.d}" transform="${tBase}" ${baseStyle}/>`);
+		shapeParts.push(`<path d="${originalShape.d}" transform="${tMirror}" ${baseStyle}/>`);
 	} else {
 		shapeParts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
 		shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);

@@ -59,7 +59,9 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 	const v = edgeVec(edgeData[longestIdx].a, edgeData[longestIdx].b);
 	const theta = Math.atan2(v[1], v[0]);
 	const rotateBy = (Math.PI / 2) - theta; // rotate so longest edge vertical
+	const c0 = centroid(poly);
 	const base = rotatePolygon(poly, rotateBy);
+	const cBase = centroid(base);
 
 	// Recompute edges after rotation for lengths in order starting at longest edge
 	const edgesOrdered = [];
@@ -125,6 +127,7 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 		anchors: { longestIdx },
 		align: { xEdge, yMinEdge, yMaxEdge },
 		alignMirror: { xEdge: xEdgeMirror, yMinEdge: yMinEdgeMirror, yMaxEdge: yMaxEdgeMirror },
+		rotation: { angle: rotateBy, centroidOriginal: c0, centroidBase: cBase },
 	};
 }
 
