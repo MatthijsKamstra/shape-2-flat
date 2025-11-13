@@ -9,6 +9,9 @@
    id="svg1"
    sodipodi:docname="boxy.svg"
    inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   inkscape:export-filename="boxy_plain.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -22,10 +25,10 @@
    inkscape:pageopacity="0.0"
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
-   inkscape:zoom="0.062419761"
-   inkscape:cx="1249.6043"
-   inkscape:cy="3043.9078"
-   inkscape:window-width="1280"
+   inkscape:zoom="0.92075"
+   inkscape:cx="396.959"
+   inkscape:cy="385.55525"
+   inkscape:window-width="2560"
    inkscape:window-height="1027"
    inkscape:window-x="1728"
    inkscape:window-y="25"
@@ -33,7 +36,7 @@
    inkscape:current-layer="svg1"
    inkscape:document-units="mm" />
     <g
-   transform="matrix(0.08835871,-0.01005665,0.01005665,0.08835871,-62.793718,-30.666554)"
+   transform="matrix(0.08835871,-0.01005665,0.01005665,0.08835871,-121.12705,-3.9424161)"
    id="g1">
         <path
    d="m 1676.25,810.25 135.95,15.473 -82.2,707.214 h -107.5 l -25.75,-350.594 -63,-56.593 -14.37,-156.43 z"
