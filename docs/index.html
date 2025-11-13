@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<title>shape-2-flat (browser)</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+	<header>
+		<h1>shape-2-flat (browser)</h1>
+		<p>Pure JS demo: circle/ellipse first-class; generic paths fallback.</p>
+	</header>
+
+	<section class="controls">
+		<label>
+			SVG file
+			<input type="file" id="file" accept=".svg,image/svg+xml">
+		</label>
+		<label>
+			Depth (mm)
+			<input type="number" id="depth" value="40" step="1" min="1">
+		</label>
+		<button id="generate">Generate</button>
+		<button id="download" disabled>Download SVG</button>
+	</section>
+
+	<section class="canvas">
+		<div id="preview"></div>
+	</section>
+
+	<script type="module" src="./app.js"></script>
+</body>
+
+</html>
