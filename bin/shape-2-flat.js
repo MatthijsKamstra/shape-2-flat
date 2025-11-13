@@ -103,8 +103,9 @@ async function main() {
 		const outPath = path.resolve(argv.output);
 		fs.mkdirSync(path.dirname(outPath), { recursive: true });
 		fs.writeFileSync(outPath, svg, "utf-8");
-		console.log(`Net generated: ${outPath}`);
-		console.log(`Stats: faces=${meta.faces}, perimeter=${meta.perimeter.toFixed(2)}${argv.unit}, area=${meta.area.toFixed(2)}${argv.unit}`);
+		console.log(`[${argv.output}]`);
+		console.log(`   Net generated: ${outPath}`);
+		console.log(`   Stats: faces=${meta.faces}, perimeter=${meta.perimeter.toFixed(2)}${argv.unit}, area=${meta.area.toFixed(2)}${argv.unit}`);
 	} catch (e) {
 		console.error("Error:", e.message);
 		process.exit(1);
