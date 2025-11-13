@@ -1,0 +1,32 @@
+{
+  "name": "shape-2-flat",
+  "version": "0.1.0",
+  "description": "Convert an SVG path into a printable 2D net of an extruded prism",
+  "bin": {
+    "shape-2-flat": "bin/shape-2-flat.js"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node bin/shape-2-flat.js",
+    "dev": "node bin/shape-2-flat.js --help"
+  },
+  "keywords": [
+    "svg",
+    "path",
+    "net",
+    "papercraft",
+    "extrude",
+    "prism"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "svg-path-properties": "^1.0.16",
+    "@xmldom/xmldom": "^0.8.10",
+    "xpath": "^0.0.34",
+    "yargs": "^17.7.2"
+  }
+}
