@@ -94,20 +94,23 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {
 	const useEllipse = originalShape && originalShape.kind === 'ellipse' && originalShape.shapeParams;
 	const useRect = originalShape && originalShape.kind === 'rect';
 	if (useCircle || useEllipse) {
-		const bBox = bboxOfPoints(baseC);
-		const mBox = bboxOfPoints(mirrorC);
-		const bcx = (bBox.minX + bBox.maxX) / 2;
-		const bcy = (bBox.minY + bBox.maxY) / 2;
-		const mcx = (mBox.minX + mBox.maxX) / 2;
-		const mcy = (mBox.minY + mBox.maxY) / 2;
+		// Align to the side stack: base's rightmost point touches stack left edge; mirror's leftmost touches stack right edge
+		const stackLeftX = stackedC[0].x;
+		const stackRightX = stackedC[0].x + stackedC[0].w;
+		const stackTopY = stackedC[0].y;
+		const stackMidY = stackTopY + (stackedC.reduce((s, r) => s + r.h, 0)) / 2;
 		if (useCircle) {
 			const { r } = originalShape.shapeParams;
-			shapeParts.push(`<circle cx="${bcx}" cy="${bcy}" r="${r}" ${baseStyle}/>`);
-			shapeParts.push(`<circle cx="${mcx}" cy="${mcy}" r="${r}" ${baseStyle}/>`);
+			const baseCx = stackLeftX - r;
+			const mirrCx = stackRightX + r;
+			shapeParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="${r}" ${baseStyle}/>`);
+			shapeParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="${r}" ${baseStyle}/>`);
 		} else {
 			const { rx, ry } = originalShape.shapeParams;
-			shapeParts.push(`<ellipse cx="${bcx}" cy="${bcy}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
-			shapeParts.push(`<ellipse cx="${mcx}" cy="${mcy}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
+			const baseCx = stackLeftX - rx;
+			const mirrCx = stackRightX + rx;
+			shapeParts.push(`<ellipse cx="${baseCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
+			shapeParts.push(`<ellipse cx="${mirrCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
 		}
 	} else if (useRect) {
 		const bBox = bboxOfPoints(baseC);
@@ -179,12 +182,17 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape } = {
 		}
 	}
 
+	// Info text: circumference/perimeter equals total side strip length
+	const stripLength = net.sideRects.reduce((s, r) => s + r.h, 0);
+	const info = `<text x="5" y="10" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Perimeter: ${stripLength.toFixed(2)} ${unit}</text>`;
+
 	let parts = [];
 	parts.push(`<g id="GLUE">${glueParts.join("\n")}</g>`);
 	parts.push(`<g id="SHAPE">${shapeParts.join("\n")}</g>`);
 	parts.push(`<g id="FOLDING_LINES">${foldParts.join("\n")}</g>`);
 	parts.push(`<g id="CUT_LINES"></g>`);
 	parts.push(`<g id="DESIGN"></g>`);
+	parts.push(`<g id="INFO">${info}</g>`);
 
 	// no glue tabs
 

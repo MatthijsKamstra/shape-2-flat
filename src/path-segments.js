@@ -1,6 +1,6 @@
 "use strict";
 
-const { SVGPathProperties } = require("svg-path-properties");
+const { svgPathProperties } = require("svg-path-properties");
 
 function numberMatcher() {
 	return /[+-]?(?:\d+\.\d+|\d+\.|\.\d+|\d+)(?:[eE][+-]?\d+)?/y; // sticky
@@ -42,7 +42,7 @@ function computeSegmentLengthsFromPath(d) {
 	function arcLength(x0, y0, rx, ry, xRot, largeArc, sweep, x1, y1) {
 		const piece = `M ${x0},${y0} A ${rx} ${ry} ${xRot} ${largeArc} ${sweep} ${x1} ${y1}`;
 		try {
-			const props = new SVGPathProperties(piece);
+			const props = new svgPathProperties(piece);
 			return props.getTotalLength();
 		} catch {
 			return Math.hypot(x1 - x0, y1 - y0);
