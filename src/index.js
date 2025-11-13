@@ -37,9 +37,11 @@ async function generateNetFromSvg({ svgContent, pathData, depth = 50, height, sc
 	const depthVal = typeof depth === "number" ? depth : (typeof height === "number" ? height : 50);
 	// Experimental: compute segment lengths from original path (lines and arcs) to drive side rectangles
 	let edgeLengths;
+	let hasArcs = false;
 	try {
 		const segs = computeSegmentLengthsFromPath(d);
 		if (segs && segs.length) {
+			hasArcs = segs.some(s => s.type === 'arc');
 			if (info.kind === 'circle' || info.kind === 'ellipse') {
 				// Combine all arc segments into a single side-rect with total circumference
 				const totalArc = segs.filter(s => s.type === 'arc').reduce((a, s) => a + s.length, 0);
@@ -50,7 +52,8 @@ async function generateNetFromSvg({ svgContent, pathData, depth = 50, height, sc
 		}
 	} catch { }
 	const net = makeNet(poly, depthVal, { minSegment, edgeLengths });
-	const { svg, meta } = renderNetSvg(net, { margin, unit, page: { width: 210, height: 297 }, originalShape: info, scale });
+	const originalShape = { ...info, hasArcs: hasArcs || info.kind === 'circle' || info.kind === 'ellipse' };
+	const { svg, meta } = renderNetSvg(net, { margin, unit, page: { width: 210, height: 297 }, originalShape, scale });
 	return { svg, meta };
 }
 

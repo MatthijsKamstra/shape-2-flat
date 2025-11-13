@@ -48,7 +48,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// Now stack rectangles at (sx, sy)
 	let cy = sy;
 	const stacked = net.sideRects.map(seg => {
-		const r = { x: sx, y: cy, w: seg.w, h: seg.h };
+		const r = { x: sx, y: cy, w: seg.w, h: seg.h, type: seg.type || 'line' };
 		cy += seg.h;
 		return r;
 	});
@@ -63,7 +63,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const contentWidth = page?.width ?? (Math.max(baseBox.maxX, sy + totalStripH, mirrorBox.maxX) + margin);
 	const contentHeight = page?.height ?? (Math.max(baseBox.maxY, sy + totalStripH, mirrorBox.maxY) + margin);
 
-	const baseStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
+	const baseStyle = 'fill="#e5e5e5" stroke="#000" stroke-width="0.6"';
+	const mirrorStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const extrudeStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const tabStyle = 'fill="#e5e5e5"';
 
@@ -85,7 +86,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const baseC = translate(base, dx, dy);
 	const mirrorC = translate(baseMirror, dx, dy);
-	const stackedC = stacked.map(r => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h }));
+	const stackedC = stacked.map(r => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h, type: r.type }));
 	// no tabs
 
 	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
@@ -104,13 +105,13 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const baseCx = stackLeftX - r;
 			const mirrCx = stackRightX + r;
 			shapeParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="${r}" ${baseStyle}/>`);
-			shapeParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="${r}" ${baseStyle}/>`);
+			shapeParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="${r}" ${mirrorStyle}/>`);
 		} else {
 			const { rx, ry } = originalShape.shapeParams;
 			const baseCx = stackLeftX - rx;
 			const mirrCx = stackRightX + rx;
 			shapeParts.push(`<ellipse cx="${baseCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
-			shapeParts.push(`<ellipse cx="${mirrCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
+			shapeParts.push(`<ellipse cx="${mirrCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${mirrorStyle}/>`);
 		}
 	} else if (useRect) {
 		const bBox = bboxOfPoints(baseC);
@@ -121,20 +122,25 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		const mh = mBox.maxY - mBox.minY;
 		// Render axis-aligned rects matching the aligned base/mirror footprints
 		shapeParts.push(`<rect x="${bBox.minX}" y="${bBox.minY}" width="${bw}" height="${bh}" ${baseStyle}/>`);
-		shapeParts.push(`<rect x="${mBox.minX}" y="${mBox.minY}" width="${mw}" height="${mh}" ${baseStyle}/>`);
+		shapeParts.push(`<rect x="${mBox.minX}" y="${mBox.minY}" width="${mw}" height="${mh}" ${mirrorStyle}/>`);
 	} else if (originalShape && originalShape.kind === 'path' && originalShape.d && net.rotation) {
 		const deg = (net.rotation.angle * 180) / Math.PI;
 		const c0x = net.rotation.centroidOriginal[0] * scale;
 		const c0y = net.rotation.centroidOriginal[1] * scale;
 		const cBx = net.rotation.centroidBase[0];
 		const cBy = net.rotation.centroidBase[1];
-		const tBase = `translate(${dx},${dy}) translate(${baseOffsetX},${baseOffsetY}) rotate(${deg} ${c0x} ${c0y}) scale(${scale} ${scale})`;
-		const tMirror = `translate(${dx},${dy}) translate(${mirrorOffsetX},${mirrorOffsetY}) translate(${cBx},${cBy}) scale(-1 1) translate(${-cBx},${-cBy}) rotate(${deg} ${c0x} ${c0y}) scale(${scale} ${scale})`;
+		// Tangent-align: base rightmost to stack left, mirror leftmost to stack right (pre-centering)
+		const stackLeftX0 = sx;
+		const stackRightX0 = sx + (stacked[0]?.w || 0);
+		const deltaBaseX = stackLeftX0 - baseBox.maxX;
+		const deltaMirrorX = stackRightX0 - mirrorBox.minX;
+		const tBase = `translate(${dx},${dy}) translate(${baseOffsetX + deltaBaseX},${baseOffsetY}) rotate(${deg} ${c0x} ${c0y}) scale(${scale} ${scale})`;
+		const tMirror = `translate(${dx},${dy}) translate(${mirrorOffsetX + deltaMirrorX},${mirrorOffsetY}) translate(${cBx},${cBy}) scale(-1 1) translate(${-cBx},${-cBy}) rotate(${deg} ${c0x} ${c0y}) scale(${scale} ${scale})`;
 		shapeParts.push(`<path d="${originalShape.d}" transform="${tBase}" ${baseStyle}/>`);
-		shapeParts.push(`<path d="${originalShape.d}" transform="${tMirror}" ${baseStyle}/>`);
+		shapeParts.push(`<path d="${originalShape.d}" transform="${tMirror}" ${mirrorStyle}/>`);
 	} else {
 		shapeParts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
-		shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);
+		shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${mirrorStyle}/>`);
 	}
 	for (const r of stackedC) {
 		shapeParts.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" ${extrudeStyle}/>`);
@@ -145,7 +151,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const foldStyle = 'fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"';
 	const glueParts = [];
 	const foldParts = [];
-	const isCurvy = originalShape && (originalShape.kind === 'circle' || originalShape.kind === 'ellipse');
+	const isCurvyShape = originalShape && ((originalShape.kind === 'circle' || originalShape.kind === 'ellipse') || originalShape.hasArcs);
 	const toothPitch = tabW; // spacing along seam for saw-tooth
 	for (const r of stackedC) {
 		// Left tab (vertical seam with base)
@@ -154,7 +160,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const yTop = r.y;
 			const yBot = r.y + r.h;
 			const xOut = r.x - tabW;
-			if (isCurvy) {
+			if (isCurvyShape && r.type === 'arc') {
 				// Saw-tooth triangles along the seam
 				let y0 = yTop;
 				while (y0 < yBot - 1e-6) {
@@ -177,7 +183,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const yTop = r.y;
 			const yBot = r.y + r.h;
 			const xOut = r.x + r.w + tabW;
-			if (isCurvy) {
+			if (isCurvyShape && r.type === 'arc') {
 				let y0 = yTop;
 				while (y0 < yBot - 1e-6) {
 					const y1 = Math.min(y0 + toothPitch, yBot);

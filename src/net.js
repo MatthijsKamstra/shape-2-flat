@@ -73,8 +73,8 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 		edgesOrdered.push({ idx, a, b, h });
 	}
 
-	// Determine side rectangle heights
-	let heights = [];
+	// Determine side rectangle heights (and types when provided)
+	let segments = [];
 	if (Array.isArray(edgeLengths) && edgeLengths.length > 0) {
 		// Reorder provided lengths to start from longest straight edge (edgesOrdered[0].h)
 		const target = edgesOrdered[0].h;
@@ -85,23 +85,23 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 			if (edgeLengths[i].type === 'line' && diff < bestDiff) { bestDiff = diff; startIdx = i; }
 		}
 		const reordered = edgeLengths.slice(startIdx).concat(edgeLengths.slice(0, startIdx));
-		heights = reordered.map(s => s.length);
+		segments = reordered.map(s => ({ h: s.length, type: s.type || 'line' }));
 	} else {
 		// Default from rotated polygon edges
-		heights = edgesOrdered.map(e => e.h);
+		segments = edgesOrdered.map(e => ({ h: e.h, type: 'line' }));
 	}
 
-	// Merge small segments into previous if below threshold
-	const mergedH = [];
-	for (const h of heights) {
-		if (mergedH.length === 0) { mergedH.push(h); continue; }
-		if (h < minSegment) {
-			mergedH[mergedH.length - 1] += h;
+	// Merge small segments into previous if below threshold (preserve previous type)
+	const mergedSegs = [];
+	for (const s of segments) {
+		if (mergedSegs.length === 0) { mergedSegs.push({ ...s }); continue; }
+		if (s.h < minSegment) {
+			mergedSegs[mergedSegs.length - 1].h += s.h;
 		} else {
-			mergedH.push(h);
+			mergedSegs.push({ ...s });
 		}
 	}
-	const sideRects = mergedH.map(h => ({ w: depth, h }));
+	const sideRects = mergedSegs.map(s => ({ w: depth, h: s.h, type: s.type }));
 
 	// Alignment data for the first (longest) edge on base
 	const firstEdge = edgesOrdered[0];
