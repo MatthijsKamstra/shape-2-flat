@@ -1,17 +1,19 @@
 # shape-2-flat
 
-Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded prism. White fill with black stroke (no glue tabs yet).
+Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded prism. White fill with black stroke. Output is grouped into SHAPE, GLUE, FOLDING, and DESIGN; tabs live in GLUE and fold lines in FOLDING.
 
 ## What it does
 
 - Reads an SVG path (or rect/polygon) and flattens it to a polygon
-- Creates a prism of height H by:
+- Creates a prism of depth D by:
   - Base (original polygon), rotated so the longest edge is vertical
   - Mirrored Base (horizontal mirror) placed to the right
   - Side rectangles (voor rechthoeken: precies vier), verticaal gestapeld tussen Base en Mirror met:
     - height = bijbehorende randlengte in volgorde lang, kort, lang, kort
     - width = extrusion depth (die je via --depth opgeeft)
 - Outputs an A4-sized SVG (210×297mm) with white-filled shapes and black stroke outlines
+- Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE"> for glue tabs, <g id="FOLDING"> for dashed fold lines, <g id="DESIGN"> reserved for overlays
+- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke, on all four sides of each side rectangle. Tabs render into GLUE and do not affect SHAPE centering. Fold lines are drawn into FOLDING.
 
 ## Quick start
 
@@ -20,8 +22,8 @@ Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded
 Examples:
 
 ```sh
-# Using a path string (rectangle 100x50), height 30mm, output to assets/net.svg
-npx shape-2-flat --path "M0,0 L100,0 L100,50 L0,50 Z" --height 30 --unit mm --output assets/net.svg
+# Using a path string (rectangle 100x50), depth 30mm, output to assets/net.svg
+npx shape-2-flat --path "M0,0 L100,0 L100,50 L0,50 Z" --depth 30 --unit mm --output assets/net.svg
 
 # Using an SVG file as input
 npx shape-2-flat --input assets/rounded.svg --depth 40 --tolerance 0.5 --output assets/net.svg
@@ -31,7 +33,7 @@ If you cloned this repo locally:
 
 ```sh
 npm install
-node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --height 40 --output assets/net.svg
+node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --output assets/net.svg
 ```
 
 ## Options
@@ -44,14 +46,15 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --height 40 --outp
 - --min-segment, -ms: Merge edge segments shorter than this into the previous (default 0.5)
 - --margin, -m: Page margin in output (default 10) [some layouts use 0 to connect parts]
 - --output, -o: Output SVG path (default assets/net.svg)
-- --unit, -u: Output dimension unit (px, mm) default px
+- --unit, -u: Output dimension unit (px, mm) default mm
 
 ## Notes and limitations
 
 - Arcs (A) are handled via sampling; tolerance controls detail
 - Self-intersecting paths are not supported
-- For rectangles: side rectangles are four segments ordered long, short, long, short; connected without gaps; no glue tabs
-- Units are not converted; you control them via the `--unit` flag and the `--scale` option
+- For rectangles: side rectangles are four segments ordered long, short, long, short; connected without gaps
+- Glue tabs: 7 mm angled tabs (gray fill, no stroke) around each side rectangle are emitted in the GLUE group only; SHAPE layout/centering excludes these tabs. Fold lines appear in FOLDING.
+- Units are not converted; you control them via the `--unit` flag and the `--scale` option. Default unit is mm.
   - A4 canvas is fixed to 210×297 in the chosen `--unit` (use `--unit mm` for print)
 
 ## Docs

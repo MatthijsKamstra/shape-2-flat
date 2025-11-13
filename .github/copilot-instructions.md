@@ -9,6 +9,12 @@ Common prompts:
 - “Keep white fill, black stroke.” -> See styles in `src/render.js`.
 - “Connect shapes without gaps.” -> Gap is zero in `render.js`.
 
+Glue tabs and fold lines:
+
+- Tabs are 7 mm wide with 45° angled ends (papertoy style), rendered as gray-filled polygons without stroke in the `GLUE` group.
+- Fold lines are dashed strokes rendered in the `FOLDING` group along the tab/base seams.
+- Centering is computed from `SHAPE` only; `GLUE`/`FOLDING` do not affect layout.
+
 Also:
 
 - A4 output is set in `src/index.js` when calling `renderNetSvg`.

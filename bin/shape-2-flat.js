@@ -63,7 +63,7 @@ async function main() {
 		.option("unit", {
 			alias: "u",
 			type: "string",
-			default: "px",
+			default: "mm",
 			describe: "Unit suffix for output SVG dimensions (e.g., px, mm)",
 		})
 		.help()
@@ -104,7 +104,7 @@ async function main() {
 		fs.mkdirSync(path.dirname(outPath), { recursive: true });
 		fs.writeFileSync(outPath, svg, "utf-8");
 		console.log(`Net generated: ${outPath}`);
-		console.log(`Stats: faces=${meta.faces}, perimeter=${meta.perimeter.toFixed(2)}${argv.unit}, area=${meta.area.toFixed(2)}${argv.unit}^2`);
+		console.log(`Stats: faces=${meta.faces}, perimeter=${meta.perimeter.toFixed(2)}${argv.unit}, area=${meta.area.toFixed(2)}${argv.unit}`);
 	} catch (e) {
 		console.error("Error:", e.message);
 		process.exit(1);

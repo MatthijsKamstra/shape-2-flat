@@ -65,6 +65,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page } = {}) {
 
 	const baseStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const extrudeStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
+	const tabStyle = 'fill="#e5e5e5"';
 
 	// Center the whole group within the page bounds (if page provided) or content size
 	// Compute group bbox
@@ -87,21 +88,78 @@ function renderNetSvg(net, { margin = 10, unit = "px", page } = {}) {
 	const stackedC = stacked.map(r => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h }));
 	// no tabs
 
-	let parts = [];
-	// base and mirrored base (white fill, black outline)
-	parts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
-	parts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);
-
-	// side rectangles stacked as <rect>
+	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
+	const shapeParts = [];
+	shapeParts.push(`<path d="${polyToPath(baseC)}" ${baseStyle}/>`);
+	shapeParts.push(`<path d="${polyToPath(mirrorC)}" ${baseStyle}/>`);
 	for (const r of stackedC) {
-		parts.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" ${extrudeStyle}/>`);
+		shapeParts.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" ${extrudeStyle}/>`);
 	}
+
+	// Glue tabs: 7 mm with 45° angled ends on all four sides; folding lines separated
+	const tabW = 7;
+	const foldStyle = 'fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"';
+	const glueParts = [];
+	const foldParts = [];
+	for (const r of stackedC) {
+		// Left tab (vertical)
+		{
+			const xFold = r.x;
+			const xOut = r.x - tabW;
+			const yTop = r.y;
+			const yBot = r.y + r.h;
+			const vDelta = Math.min(tabW, r.h / 2);
+			const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
+			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			foldParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
+		}
+		// Right tab (vertical)
+		{
+			const xFold = r.x + r.w;
+			const xOut = r.x + r.w + tabW;
+			const yTop = r.y;
+			const yBot = r.y + r.h;
+			const vDelta = Math.min(tabW, r.h / 2);
+			const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
+			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			foldParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
+		}
+		// Top tab (horizontal)
+		{
+			const yFold = r.y;
+			const yOut = r.y - tabW;
+			const xLeft = r.x;
+			const xRight = r.x + r.w;
+			const hDelta = Math.min(tabW, r.w / 2);
+			const d = `M ${xLeft},${yFold} L ${xLeft + hDelta},${yOut} L ${xRight - hDelta},${yOut} L ${xRight},${yFold} Z`;
+			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			foldParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
+		}
+		// Bottom tab (horizontal)
+		{
+			const yFold = r.y + r.h;
+			const yOut = r.y + r.h + tabW;
+			const xLeft = r.x;
+			const xRight = r.x + r.w;
+			const hDelta = Math.min(tabW, r.w / 2);
+			const d = `M ${xLeft},${yFold} L ${xLeft + hDelta},${yOut} L ${xRight - hDelta},${yOut} L ${xRight},${yFold} Z`;
+			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+			foldParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
+		}
+	}
+
+	let parts = [];
+	parts.push(`<g id="GLUE">${glueParts.join("\n")}</g>`);
+	parts.push(`<g id="SHAPE">${shapeParts.join("\n")}</g>`);
+	parts.push(`<g id="FOLDING_LINES">${foldParts.join("\n")}</g>`);
+	parts.push(`<g id="CUT_LINES"></g>`);
+	parts.push(`<g id="DESIGN"></g>`);
 
 	// no glue tabs
 
 	const svg = `<?xml version="1.0" encoding="UTF-8"?>\n` +
 		`<svg xmlns="http://www.w3.org/2000/svg" width="${contentWidth}${unit}" height="${contentHeight}${unit}" viewBox="0 0 ${contentWidth} ${contentHeight}">\n` +
-		`<rect x="0" y="0" width="100%" height="100%" fill="silver"/>\n` +
+		`<rect x="0" y="0" width="100%" height="100%" fill="white" id="BG"/>\n` +
 		parts.join("\n") +
 		`\n</svg>\n`;
 

@@ -1,7 +1,43 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 2481 3508" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
-    <g transform="matrix(0.993585,-0.113086,0.113086,0.993585,-1445.953205,1850.293803)">
-        <path d="M1676.25,810.25L1812.2,825.723L1730,1532.937L1622.5,1532.937L1596.75,1182.343L1533.75,1125.75L1519.38,969.32L1676.25,810.25Z" style="fill:rgb(179,179,179);stroke:rgb(41,41,41);stroke-width:4.17px;"/>
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   xml:space="preserve"
+   style="clip-rule:evenodd;fill-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5"
+   id="svg1"
+   sodipodi:docname="boxy.svg"
+   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs1" /><sodipodi:namedview
+   id="namedview1"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   inkscape:zoom="0.062419761"
+   inkscape:cx="1249.6043"
+   inkscape:cy="3043.9078"
+   inkscape:window-width="1280"
+   inkscape:window-height="1027"
+   inkscape:window-x="1728"
+   inkscape:window-y="25"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="svg1"
+   inkscape:document-units="mm" />
+    <g
+   transform="matrix(0.08835871,-0.01005665,0.01005665,0.08835871,-62.793718,-30.666554)"
+   id="g1">
+        <path
+   d="m 1676.25,810.25 135.95,15.473 -82.2,707.214 h -107.5 l -25.75,-350.594 -63,-56.593 -14.37,-156.43 z"
+   style="fill:#b3b3b3;stroke:#292929;stroke-width:4.17px"
+   id="path1" />
     </g>
 </svg>
