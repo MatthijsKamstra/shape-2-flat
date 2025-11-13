@@ -1,2 +1,42 @@
+## Local helper scripts (keep tracked if needed)
 convert.sh
-export/*
+
+## Generated exports (SVG output, intermediate exports)
+export/
+assets/net.svg
+
+## Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+
+## Build / temp
+dist/
+build/
+tmp/
+.cache/
+coverage/
+.nyc_output/
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Editors / IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+## Misc
+.sass-cache/
+.eslintcache
+*.log
+
+# Keep originals/ in repo — it contains source SVGs
