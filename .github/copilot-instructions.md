@@ -1,12 +1,12 @@
 # Copilot Guide
 
-Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline) into a printable A4 SVG “net” of an extruded prism. Output groups are `SHAPE`, `GLUE`, `FOLDING_LINES`, and `DESIGN`.
+Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circle/ellipse) into a printable A4 SVG “net” of an extruded prism. Output groups are `SHAPE`, `GLUE`, `FOLDING_LINES`, and `DESIGN`.
 
 ## Architecture & Data Flow
 
 - Entry (`bin/shape-2-flat.js`): Parses CLI flags via `yargs`, reads `--input` SVG or `--path` string, then calls `generateNetFromSvg` and writes the resulting SVG to `--output`.
 - Orchestration (`src/index.js`):
-  - `extractPathD` (`src/svg-io.js`) → prefer `<path>`, else `rect` → `polygon`/`polyline` to a `d` string.
+  - `extractPathInfo` (`src/svg-io.js`) → prefer `<path>`, also supports `rect`/`circle`/`ellipse`/`polygon`/`polyline`.
   - `flattenPath` + `simplifyColinear` (`src/path-flatten.js`) → polygon points.
   - `makeNet` (`src/net.js`) → base, mirrored base, side rectangles from edge lengths; merges tiny segments via `minSegment`.
   - `renderNetSvg` (`src/render.js`) → A4 SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `DESIGN`.
@@ -18,13 +18,15 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline) int
 - Mirrored base: horizontal mirror placed to the right of the side stack, aligned along the same edge span.
 - No gaps between parts (`gap = 0` in `render.js`).
 - Centering uses the bounds of `SHAPE` and side stack only; `GLUE`/`FOLDING_LINES` do not influence layout.
+- Circle/Ellipse placement: base is tangent‑aligned at its rightmost point to the side stack; mirrored base tangent‑aligned at its leftmost point.
+- Primitives (rect/circle/ellipse) are preserved in SHAPE and not converted to paths.
 
 ## Styles & Grouping
 
 - `SHAPE`: white fill, black stroke (`stroke-width=0.6`).
-- `GLUE`: 7 mm tabs with 45° angled ends on all four sides of each side rectangle; gray fill (`#e5e5e5`), no stroke.
+- `GLUE`: 7 mm tabs with 45° angled ends on all four sides; for circles/ellipses, vertical seams use saw‑tooth triangular tabs; gray fill (`#e5e5e5`), no stroke.
 - `FOLDING_LINES`: dashed fold lines along tab seams; white stroke (`#FFF`), `stroke-dasharray="2,1"`.
-- `DESIGN`: reserved for overlays; currently empty. Page background is white.
+- `DESIGN`: reserved for overlays; includes a perimeter text label for validation. Page background is white.
 
 ## Page & Units
 
@@ -57,6 +59,7 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline) int
 - `svg-path-properties`: sampling path geometry for flattening.
 - `@xmldom/xmldom` + `xpath`: parse and query SVG for `<path>`/`rect`/`polygon`.
 - `yargs`: CLI parsing (`.strict()` enabled).
+- `svgpath`: apply and bake transforms into path `d` data when present.
 
 ## Common Prompt Targets (quick references)
 
@@ -65,6 +68,9 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline) int
 - “Keep white fill, black stroke.” → `baseStyle`/`extrudeStyle` in `src/render.js`.
 - “Connect shapes without gaps.” → `gap = 0` in `src/render.js`.
 - “Fold lines group id?” → `FOLDING_LINES` in `src/render.js` (dashed white).
+- “Preserve rect/circle/ellipse primitives.” → `extractPathInfo` in `src/svg-io.js` and primitive rendering in `src/render.js`.
+- “Saw‑tooth tabs for curved seams.” → vertical seams for circles/ellipses in `src/render.js` (GLUE group).
+- “Perimeter overlay text?” → `DESIGN` group in `src/render.js`.
 
 ## Editing Guidelines
 

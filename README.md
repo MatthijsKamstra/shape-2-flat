@@ -1,10 +1,10 @@
 # shape-2-flat
 
-Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded prism. White fill with black stroke. Output is grouped into SHAPE, GLUE, FOLDING, and DESIGN; tabs live in GLUE and fold lines in FOLDING.
+Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded prism. White fill with black stroke. Output is grouped into SHAPE, GLUE, FOLDING_LINES, and DESIGN; tabs live in GLUE and fold lines in FOLDING_LINES.
 
 ## What it does
 
-- Reads an SVG path (or rect/polygon) and flattens it to a polygon
+- Reads an SVG path (or rect/polygon/circle/ellipse) and flattens it to a polygon
 - Creates a prism of depth D by:
   - Base (original polygon), rotated so the longest edge is vertical
   - Mirrored Base (horizontal mirror) placed to the right
@@ -12,8 +12,10 @@ Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded
     - height = bijbehorende randlengte in volgorde lang, kort, lang, kort
     - width = extrusion depth (die je via --depth opgeeft)
 - Outputs an A4-sized SVG (210×297mm) with white-filled shapes and black stroke outlines
-- Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE"> for glue tabs, <g id="FOLDING"> for dashed fold lines, <g id="DESIGN"> reserved for overlays
-- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke, on all four sides of each side rectangle. Tabs render into GLUE and do not affect SHAPE centering. Fold lines are drawn into FOLDING.
+- Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE"> for glue tabs, <g id="FOLDING_LINES"> for dashed fold lines, <g id="DESIGN"> reserved for overlays
+- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke. For circle/ellipse, vertical seams use saw‑tooth (triangular) tabs for easier bending; top/bottom remain 45°. Tabs render into GLUE and do not affect SHAPE centering. Fold lines are drawn into FOLDING_LINES.
+- Primitives: circle/ellipse/rect inputs render as their original primitives in SHAPE (not converted to paths). Circle/ellipse are tangent‑aligned to the side stack (base: rightmost point, mirror: leftmost point).
+- Perimeter overlay: a small "Perimeter: N unit" label is added in DESIGN for quick validation (equals the total side‑strip length/circumference).
 
 ## Quick start
 
@@ -53,14 +55,15 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 - Arcs (A) are handled via sampling; tolerance controls detail
 - Self-intersecting paths are not supported
 - For rectangles: side rectangles are four segments ordered long, short, long, short; connected without gaps
-- Glue tabs: 7 mm angled tabs (gray fill, no stroke) around each side rectangle are emitted in the GLUE group only; SHAPE layout/centering excludes these tabs. Fold lines appear in FOLDING.
+- Arc handling: arc segments contribute exact arc length to side‑rect heights. For pure circle/ellipse inputs, the side stack uses one rectangle whose height equals the circumference.
+- Glue tabs: 7 mm angled tabs (gray fill, no stroke) are emitted in GLUE; for circle/ellipse the vertical seams use saw‑tooth tabs. SHAPE layout/centering excludes tabs. Fold lines appear in FOLDING_LINES.
 - Units are not converted; you control them via the `--unit` flag and the `--scale` option. Default unit is mm.
   - A4 canvas is fixed to 210×297 in the chosen `--unit` (use `--unit mm` for print)
 
 ## Docs
 
-- See `docs/TERMINOLOGY.md` for terminology
-- See `docs/COPILOT.md` for a quick collaboration guide
+- See `TERMINOLOGY.md` for terminology
+- See `.github/copilot-instructions.md` for a copilot prompt reference
 
 ## License
 
