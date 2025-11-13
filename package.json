@@ -26,6 +26,7 @@
   "dependencies": {
     "svg-path-properties": "^1.0.16",
     "@xmldom/xmldom": "^0.8.10",
+    "svgpath": "^2.6.0",
     "xpath": "^0.0.34",
     "yargs": "^17.7.2"
   }
