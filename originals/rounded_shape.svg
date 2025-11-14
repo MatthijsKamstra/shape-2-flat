@@ -38,5 +38,5 @@
     
 <path
    id="path1"
-   style="vector-effect:non-scaling-stroke;fill:#ff8c00;stroke-width:0.283954;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2.14643, 1.07321;-inkscape-stroke:hairline;paint-order:fill markers stroke"
-   d="M 35.372001 37.059237 L 35.372001 123.01471 A 50 50 0 0 0 85.37205 173.01476 A 50 50 0 0 0 135.3721 123.01471 L 135.3721 37.059237 L 35.372001 37.059237 z " /></svg>
+   style="vector-effect:non-scaling-stroke;fill:#ff8c00;stroke-width:0.108664;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.821399, 0.410698;-inkscape-stroke:hairline;paint-order:fill markers stroke"
+   d="m 35.372001,120.9871 v 32.89357 a 19.134073,19.134073 0 0 0 19.134092,19.13409 19.134073,19.134073 0 0 0 19.134093,-19.13409 V 120.9871 Z" /></svg>

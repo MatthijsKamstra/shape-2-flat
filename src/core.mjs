@@ -70,7 +70,7 @@ function generateNet(opts = {}) {
 	} catch { }
 
 	const net = makeNet(poly, depthVal, { minSegment, edgeLengths });
-	const originalShape = { ...info, hasArcs: hasArcs || info.kind === "circle" || info.kind === "ellipse" };
+	const originalShape = { ...info, hasArcs: hasArcs || info.kind === "circle" || info.kind === "ellipse", edgeLengths };
 	const { svg, meta } = renderNetSvg(net, {
 		margin,
 		unit,

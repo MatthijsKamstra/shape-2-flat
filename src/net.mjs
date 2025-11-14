@@ -47,7 +47,7 @@ function mirrorPolygonHoriz(points) {
 }
 
 function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
-	// 1) Rotate polygon so the longest edge becomes vertical
+	// 1) Rotate polygon so the longest straight edge becomes vertical
 	const edgeData = [];
 	for (let i = 0; i < poly.length; i++) {
 		const a = poly[i];
@@ -55,11 +55,84 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 		const w = Math.hypot(b[0] - a[0], b[1] - a[1]);
 		edgeData.push({ i, a, b, w });
 	}
-	const longestIdx = edgeData.reduce((mi, e, idx, arr) => (e.w > arr[mi].w ? idx : mi), 0);
-	const v = edgeVec(edgeData[longestIdx].a, edgeData[longestIdx].b);
-	const theta = Math.atan2(v[1], v[0]);
-	const rotateBy = (Math.PI / 2) - theta; // rotate so longest edge vertical
-	const c0 = centroid(poly);
+
+	// If we have edgeLengths with type and angle info, use the longest straight line's angle directly
+	let targetAngle = null;
+	let longestIdx = 0;
+
+	if (Array.isArray(edgeLengths) && edgeLengths.length > 0) {
+		// Find the longest STRAIGHT LINE segment (type='line') in edgeLengths
+		const lineSegments = edgeLengths.filter(seg => seg.type === 'line');
+
+		if (lineSegments.length > 0 && lineSegments[0].angle !== undefined) {
+			// We have angle information for line segments, find the longest one
+			const longestLine = lineSegments.reduce((max, seg) =>
+				seg.length > max.length ? seg : max
+			);
+			targetAngle = longestLine.angle;
+		}
+	}	// If we don't have angle info from path segments, fall back to polygon analysis
+	if (targetAngle === null) {
+		// Find longest straight line segment (type='line') only
+		if (Array.isArray(edgeLengths)) {
+			const lineSegments = edgeLengths.filter(seg => seg.type === 'line');
+			if (lineSegments.length > 0 && lineSegments[0].angle !== undefined) {
+				const longestLine = lineSegments.reduce((max, seg) =>
+					seg.length > max.length ? seg : max
+				);
+				targetAngle = longestLine.angle;
+			}
+		}
+
+		if (targetAngle === null) {
+			// No line segments with angles, use polygon edge
+			longestIdx = edgeData.reduce((mi, e, idx, arr) => (e.w > arr[mi].w ? idx : mi), 0);
+			const v = edgeVec(edgeData[longestIdx].a, edgeData[longestIdx].b);
+			targetAngle = Math.atan2(v[1], v[0]);
+		}
+	}
+
+	// Determine rotation based on shape type
+	let rotateBy;
+	const hasArcs = Array.isArray(edgeLengths) && edgeLengths.some(seg => seg.type === 'arc');
+	const hasLines = Array.isArray(edgeLengths) && edgeLengths.some(seg => seg.type === 'line');
+
+	if (hasArcs && hasLines) {
+		// Mixed shape (curves + straight edges): rotate longest straight edge to vertical (90°)
+		// This is for half-circles, rounded shapes, etc. where the straight edge needs to align with side rectangles
+		let normalizedAngle = targetAngle;
+		while (normalizedAngle > Math.PI) normalizedAngle -= 2 * Math.PI;
+		while (normalizedAngle < -Math.PI) normalizedAngle += 2 * Math.PI;
+
+		// Determine if angle is closer to horizontal (0°/180°) or vertical (90°/-90°)
+		const absAngle = Math.abs(normalizedAngle);
+		const isHorizontal = absAngle < Math.PI / 4 || absAngle > 3 * Math.PI / 4;
+
+		if (isHorizontal) {
+			// Make it vertical at 90° (rotate horizontal edge to vertical)
+			// For 180° (left-facing), rotate to -90° instead of 90° to avoid flipping
+			if (normalizedAngle > 2 * Math.PI / 3) {
+				// 180° area: rotate to -90° (which is equivalent to 270°, or rotating -90° from 180°)
+				rotateBy = -(Math.PI / 2) - normalizedAngle; // 180° + (-90° - 180°) = -90°
+			} else if (normalizedAngle < -2 * Math.PI / 3) {
+				// -180° area: rotate to 90°
+				rotateBy = (Math.PI / 2) - normalizedAngle;
+			} else {
+				// 0° area: rotate to 90°
+				rotateBy = (Math.PI / 2) - normalizedAngle;
+			}
+		} else {
+			// Already vertical, normalize to 90° (prefer downward over upward)
+			if (normalizedAngle < 0) {
+				rotateBy = (Math.PI / 2) - normalizedAngle; // -90° to 90°
+			} else {
+				rotateBy = (Math.PI / 2) - normalizedAngle; // keep at 90°
+			}
+		}
+	} else {
+		// Pure rectangular shapes or pure curved shapes: use original logic (longest edge vertical)
+		rotateBy = (Math.PI / 2) - targetAngle;
+	} const c0 = centroid(poly);
 	const base = rotatePolygon(poly, rotateBy);
 	const cBase = centroid(base);
 

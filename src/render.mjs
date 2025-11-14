@@ -225,7 +225,18 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	// Info text: circumference/perimeter equals total side strip length
 	const stripLength = net.sideRects.reduce((s, r) => s + r.h, 0);
-	const info = `<text x="5" y="10" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Perimeter: ${stripLength.toFixed(2)} ${unit}</text>`;
+	let infoLines = [`<text x="5" y="10" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Perimeter: ${stripLength.toFixed(2)} ${unit}</text>`];
+
+	// Add segment information if available
+	if (originalShape?.edgeLengths && Array.isArray(originalShape.edgeLengths)) {
+		originalShape.edgeLengths.forEach((seg, i) => {
+			const angle = seg.angle !== undefined ? `${(seg.angle * 180 / Math.PI).toFixed(1)}°` : 'N/A';
+			const y = 16 + (i * 6);
+			infoLines.push(`<text x="5" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">segment ${i}: type=${seg.type}, length=${seg.length.toFixed(2)}${unit}, angle=${angle}</text>`);
+		});
+	}
+
+	const info = infoLines.join('\n');
 
 	let parts = [];
 	parts.push(`<g id="GLUE">${glueParts.join("\n")}</g>`);
