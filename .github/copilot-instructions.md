@@ -1,86 +1,41 @@
 # Copilot Guide
 
-Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circle/ellipse) into a printable A4 SVG "net" of an extruded prism. Output groups are `SHAPE`, `GLUE`, `FOLDING_LINES`, `CUT_LINES` (empty), `DESIGN`, `INFO`, and `BG`.
+## Purpose & Output
+- Node CLI (`bin/shape-2-flat.js`) turns SVG paths or primitives into A4 printable prism nets; exports `generateNet` for browser use via `window.Shape2Flat`.
+- Input comes from `--input` SVG content or `--path` data; outputs SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `CUT_LINES`, `DESIGN`, `INFO`, `BG` plus meta `{faces, perimeter, area}`.
+- Default depth is 50, units follow `--unit` (mm by default) and propagate to `svg width/height` and rendered geometry.
 
-## Architecture & Data Flow
+## Core Flow
+- `generateNet` (`src/core.mjs`) picks linear extraction first (`extractLinearPolygon`), otherwise samples curves via `flattenPath`; retries with tighter tolerance if fewer than 3 points.
+- `extractPathInfo` (`src/svg-io.mjs`) prefers `<path>`, handles `rect/circle/ellipse/polygon/polyline`, applies accumulated transforms with `svgpath`, and records primitive params for rendering.
+- `computeSegmentLengthsFromPath` (`src/path-segments.mjs`) reads M/L/H/V/A/Z only; stores line angles, collapses all arc pieces into one segment for circles/ellipses to keep side stack single-piece.
+- `makeNet` (`src/net.mjs`) rotates the polygon so the longest straight edge is vertical (uses segment angles when arcs are present), mirrors horizontally, and merges segments shorter than `minSegment` before building side rectangles.
 
-- Entry (`bin/shape-2-flat.js`): Parses CLI flags via `yargs`, reads `--input` SVG or `--path` string, then calls `generateNet` from `src/core.mjs` and writes the resulting SVG to `--output`.
-- Orchestration (`src/core.mjs`):
-  - `extractPathInfo` (`src/svg-io.mjs`) → prefer `<path>`, also supports `rect`/`circle`/`ellipse`/`polygon`/`polyline`.
-  - `extractLinearPolygon` (`src/path-linear.mjs`) → extract vertices from linear-only paths (M/L/H/V/Z).
-  - `flattenPath` + `simplifyColinear` (`src/path-flatten.mjs`) → polygon points from curved paths.
-  - `computeSegmentLengthsFromPath` (`src/path-segments.mjs`) → exact arc/line lengths for side rectangles.
-  - `makeNet` (`src/net.mjs`) → base, mirrored base, side rectangles from edge lengths; merges tiny segments via `minSegment`.
-  - `renderNetSvg` (`src/render.mjs`) → A4 SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `CUT_LINES`, `DESIGN`, `INFO`, `BG`.
+## Geometry & Layout Rules
+- Side rectangles are ordered from the longest edge onward; heights come from merged edge lengths, widths equal `depth`, and `type` transfers arc/line info for downstream rendering.
+- Layout keeps zero gap between stack and bases; centering ignores tabs by computing bounds from SHAPE + side stack only.
+- Mirror base aligns to the same edge span; for path inputs the original `d` is re-used with transforms so detail survives flattening.
+- Circle/ellipse bases stay primitive and tangent-align to the strip; rectangles render as axis-aligned primitives using the aligned bbox.
 
-## Layout Rules (What to preserve)
+## Rendering & Styling
+- `renderNetSvg` (`src/render.mjs`) repositions base/strip/mirror, recenters within `{width:210,height:297}` page unless overridden, and emits gray base fill (`#e5e5e5`), white mirror/sides, black `stroke-width=0.6`.
+- Glue tabs are 7 mm; vertical seams use saw-tooth triangles when the segment `type` is `arc`, otherwise 45° miters, and fold lines render in `FOLDING_LINES` as white dashed `stroke-dasharray="2,1"`.
+- `INFO` group prints total side-strip length plus per-segment diagnostics (type, length, angle) when `edgeLengths` were available; keep messages concise to avoid layout overlap.
+- `BG` is a full-page white rect; `CUT_LINES` and `DESIGN` are placeholders—leave them empty unless adding new features.
 
-- Rotate base so the longest edge is vertical (see `makeNet`).
-- Side rectangles: one per (merged) edge with `width = depth`, `height = edge length`, stacked vertically between Base and Mirror.
-- Mirrored base: horizontal mirror placed to the right of the side stack, aligned along the same edge span.
-- No gaps between parts (`gap = 0` in `render.mjs`).
-- Centering uses the bounds of `SHAPE` and side stack only; `GLUE`/`FOLDING_LINES` do not influence layout.
-- Circle/Ellipse placement: base is tangent‑aligned at its rightmost point to the side stack; mirrored base tangent‑aligned at its leftmost point.
-- Primitives (rect/circle/ellipse) are preserved in SHAPE and not converted to paths.
+## CLI & Workflows
+- Install with `npm install`; run via `npm start` or `node bin/shape-2-flat.js --help`. Package exposes a binary (`npx shape-2-flat`) once published.
+- Required flags: either `--input` or `--path`; optional `--scale` multiplies coordinates before layout, `--tolerance` controls sampling step, `--min-segment` merges small edges, `--margin` sets pre-centering offset.
+- CLI dynamically imports ESM core, so stay compatible with Node ≥16 and avoid top-level ESM-only Node APIs in CommonJS entry.
+- Default output is `assets/net.svg`; CLI prints perimeter with `unit` suffix. No automated tests—use sample commands in README for regression checks.
 
-## Styles & Grouping
-
-- `SHAPE`: Base has gray fill (`#e5e5e5`), Mirror & sides have white fill; all have black stroke (`stroke-width=0.6`).
-- `GLUE`: 7 mm tabs with 45° angled ends on all four sides; for circles/ellipses, vertical seams use saw‑tooth triangular tabs; gray fill (`#e5e5e5`), no stroke.
-- `FOLDING_LINES`: dashed fold lines along tab seams; white stroke (`#FFF`), `stroke-dasharray="2,1"`.
-- `CUT_LINES`: Reserved (currently empty).
-- `DESIGN`: Reserved for overlays (currently empty).
-- `INFO`: Perimeter text label at top-left for validation.
-- `BG`: White page background rectangle.
-
-## Page & Units
-
-- A4 canvas set in `src/core.mjs` via `renderNetSvg(..., { page: { width: 210, height: 297 } })`.
-- Output `width`/`height` use `--unit` suffix (`mm` default). Geometry uses the same unit scale; convert externally if needed.
-
-## CLI Flags (bin/shape-2-flat.js)
-
-- `--input, -i`: SVG file path (uses first `<path>`; fallbacks supported).
-- `--path, -p`: SVG path data string.
-- `--depth, -d`: Extrusion depth (default 50). `--height` is deprecated alias.
-- `--scale, -s`: Multiply input coordinates (default 1).
-- `--tolerance, -t`: Path sampling step (smaller → more segments; default 0.5).
-- `--min-segment, -ms`: Merge edges shorter than this into the previous (default 0.5).
-- `--margin, -m`: Margin around content before centering (default 10).
-- `--unit, -u`: Output unit suffix (`px`, `mm`; default `mm`).
-- `--output, -o`: Output SVG file (default `assets/net.svg`).
-
-## Developer Workflows
-
-- Install and run locally:
-  - `npm install`
-  - `npm start` (runs the CLI) or `node bin/shape-2-flat.js --help`
-- Minimal examples:
-  - `node bin/shape-2-flat.js --path "M0,0 L100,0 L100,50 L0,50 Z" --depth 30 --unit mm --output export/net.svg`
-  - `node bin/shape-2-flat.js --input originals/boxy_plain.svg --depth 40 --tolerance 0.5 --output export/net.svg`
-
-## External Dependencies
-
-- `svg-path-properties`: sampling path geometry for flattening.
-- `@xmldom/xmldom` + `xpath`: parse and query SVG for `<path>`/`rect`/`polygon`.
-- `yargs`: CLI parsing (`.strict()` enabled).
-- `svgpath`: apply and bake transforms into path `d` data when present.
-
-## Common Prompt Targets (quick references)
-
-- "Rotate base so longest edge is vertical." → `makeNet` in `src/net.mjs`.
-- "Make side rectangles match edge lengths and depth." → `sideRects` in `src/net.mjs`.
-- "Base has gray fill, mirror/sides white fill, all black stroke." → `baseStyle`/`mirrorStyle`/`extrudeStyle` in `src/render.mjs`.
-- "Connect shapes without gaps." → `gap = 0` in `src/render.mjs`.
-- "Fold lines group id?" → `FOLDING_LINES` in `src/render.mjs` (dashed white).
-- "Preserve rect/circle/ellipse primitives." → `extractPathInfo` in `src/svg-io.mjs` and primitive rendering in `src/render.mjs`.
-- "Saw‑tooth tabs for curved seams." → vertical seams for circles/ellipses in `src/render.mjs` (GLUE group).
-- "Perimeter text label?" → `INFO` group in `src/render.mjs`.
-- "Linear paths without curves?" → `extractLinearPolygon` in `src/path-linear.mjs`.
-- "Arc length calculation?" → `computeSegmentLengthsFromPath` in `src/path-segments.mjs`.
+## Dependencies & Environment
+- Geometry sampling relies on `svg-path-properties`; DOM parsing uses `@xmldom/xmldom` + `xpath`; transforms are baked with `svgpath`; these are loaded lazily when running under Node.
+- Browser fallback paths skip Node-only libraries; keep feature additions tolerant of missing optional deps and guard `window`/`document` access.
+- `generateNet` attaches itself to `window.Shape2Flat` when a browser environment is detected—maintain this export for docs/demo compatibility.
 
 ## Editing Guidelines
-
-- Prefer small, focused changes; keep defaults sensible.
-- If behavior changes, update `README.md` and reflect actual groups (`FOLDING_LINES`).
-- Add new CLI options only when necessary; thread them through `bin → src/core.mjs → render/makeNet` consistently.
+- Preserve layout invariants (longest edge vertical, zero gap stack, tab geometry) and group semantics across modules.
+- When changing geometry or styling, update `README.md` samples and mention new groups or defaults.
+- Thread new CLI options consistently from `bin/shape-2-flat.js` through `generateNet`, `makeNet`, and `renderNetSvg`; keep names sync'd with yargs aliases.
+- Respect ASCII encoding; add concise comments only for non-obvious geometry steps; keep behavior-preserving refactors minimal.
