@@ -1,13 +1,14 @@
 "use strict";
 
-const { extractPathInfo } = require("./svg-io");
-const { flattenPath, simplifyColinear } = require("./path-flatten");
-const { computeSegmentLengthsFromPath } = require("./path-segments");
-const { extractLinearPolygon } = require("./path-linear");
-const { makeNet } = require("./net");
-const { renderNetSvg } = require("./render");
-
 async function generateNetFromSvg({ svgContent, pathData, depth = 50, height, scale = 1, tolerance = 0.5, minSegment = 0.5, margin = 10, unit = "px" }) {
+	// Dynamically import ESM modules (they may have browser-friendly implementations)
+	const { extractPathInfo } = (await import('./svg-io.mjs'));
+	const { flattenPath, simplifyColinear } = (await import('./path-flatten.mjs'));
+	const { computeSegmentLengthsFromPath } = (await import('./path-segments.mjs'));
+	const { extractLinearPolygon } = (await import('./path-linear.mjs'));
+	const { makeNet } = (await import('./net.mjs'));
+	const { renderNetSvg } = (await import('./render.mjs'));
+
 	const info = pathData ? { d: pathData, kind: 'path' } : extractPathInfo(svgContent);
 	const d = info.d;
 	if (!d) throw new Error("No SVG path data found");

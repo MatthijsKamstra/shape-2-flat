@@ -40,3 +40,4 @@ Thumbs.db
 *.log
 
 # Keep originals/ in repo — it contains source SVGs
+.todo

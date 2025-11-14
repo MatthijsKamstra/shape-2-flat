@@ -6,10 +6,10 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 - Entry (`bin/shape-2-flat.js`): Parses CLI flags via `yargs`, reads `--input` SVG or `--path` string, then calls `generateNetFromSvg` and writes the resulting SVG to `--output`.
 - Orchestration (`src/index.js`):
-  - `extractPathInfo` (`src/svg-io.js`) → prefer `<path>`, also supports `rect`/`circle`/`ellipse`/`polygon`/`polyline`.
-  - `flattenPath` + `simplifyColinear` (`src/path-flatten.js`) → polygon points.
-  - `makeNet` (`src/net.js`) → base, mirrored base, side rectangles from edge lengths; merges tiny segments via `minSegment`.
-  - `renderNetSvg` (`src/render.js`) → A4 SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `DESIGN`.
+  - `extractPathInfo` (`src/svg-io.mjs`) → prefer `<path>`, also supports `rect`/`circle`/`ellipse`/`polygon`/`polyline`.
+  - `flattenPath` + `simplifyColinear` (`src/path-flatten.mjs`) → polygon points.
+  - `makeNet` (`src/net.mjs`) → base, mirrored base, side rectangles from edge lengths; merges tiny segments via `minSegment`.
+  - `renderNetSvg` (`src/render.mjs`) → A4 SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `DESIGN`.
 
 ## Layout Rules (What to preserve)
 
@@ -63,14 +63,14 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 ## Common Prompt Targets (quick references)
 
-- “Rotate base so longest edge is vertical.” → `makeNet` in `src/net.js`.
-- “Make side rectangles match edge lengths and depth.” → `sideRects` in `src/net.js`.
-- “Keep white fill, black stroke.” → `baseStyle`/`extrudeStyle` in `src/render.js`.
-- “Connect shapes without gaps.” → `gap = 0` in `src/render.js`.
-- “Fold lines group id?” → `FOLDING_LINES` in `src/render.js` (dashed white).
-- “Preserve rect/circle/ellipse primitives.” → `extractPathInfo` in `src/svg-io.js` and primitive rendering in `src/render.js`.
-- “Saw‑tooth tabs for curved seams.” → vertical seams for circles/ellipses in `src/render.js` (GLUE group).
-- “Perimeter overlay text?” → `DESIGN` group in `src/render.js`.
+- “Rotate base so longest edge is vertical.” → `makeNet` in `src/net.mjs`.
+- “Make side rectangles match edge lengths and depth.” → `sideRects` in `src/net.mjs`.
+- “Keep white fill, black stroke.” → `baseStyle`/`extrudeStyle` in `src/render.mjs`.
+- “Connect shapes without gaps.” → `gap = 0` in `src/render.mjs`.
+- “Fold lines group id?” → `FOLDING_LINES` in `src/render.mjs` (dashed white).
+- “Preserve rect/circle/ellipse primitives.” → `extractPathInfo` in `src/svg-io.mjs` and primitive rendering in `src/render.mjs`.
+- “Saw‑tooth tabs for curved seams.” → vertical seams for circles/ellipses in `src/render.mjs` (GLUE group).
+- “Perimeter overlay text?” → `DESIGN` group in `src/render.mjs`.
 
 ## Editing Guidelines
 
