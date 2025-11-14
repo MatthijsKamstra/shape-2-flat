@@ -47,10 +47,6 @@ function generateNet(opts = {}) {
 			polyRaw = flattenPath(d, { tolerance: finerTol, scale });
 		}
 	}
-	if (polyRaw.length < 3 && tolerance > 0.1) {
-		const finerTol = Math.max(tolerance / 2, 0.1);
-		polyRaw = flattenPath(d, { tolerance: finerTol, scale });
-	}
 
 	let poly = simplifyColinear(polyRaw);
 	if (poly.length < 3) poly = polyRaw;

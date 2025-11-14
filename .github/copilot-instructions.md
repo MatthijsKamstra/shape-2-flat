@@ -4,8 +4,8 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 ## Architecture & Data Flow
 
-- Entry (`bin/shape-2-flat.js`): Parses CLI flags via `yargs`, reads `--input` SVG or `--path` string, then calls `generateNetFromSvg` and writes the resulting SVG to `--output`.
-- Orchestration (`src/index.js`):
+- Entry (`bin/shape-2-flat.js`): Parses CLI flags via `yargs`, reads `--input` SVG or `--path` string, then calls `generateNet` from `src/core.mjs` and writes the resulting SVG to `--output`.
+- Orchestration (`src/core.mjs`):
   - `extractPathInfo` (`src/svg-io.mjs`) → prefer `<path>`, also supports `rect`/`circle`/`ellipse`/`polygon`/`polyline`.
   - `flattenPath` + `simplifyColinear` (`src/path-flatten.mjs`) → polygon points.
   - `makeNet` (`src/net.mjs`) → base, mirrored base, side rectangles from edge lengths; merges tiny segments via `minSegment`.
@@ -16,7 +16,7 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 - Rotate base so the longest edge is vertical (see `makeNet`).
 - Side rectangles: one per (merged) edge with `width = depth`, `height = edge length`, stacked vertically between Base and Mirror.
 - Mirrored base: horizontal mirror placed to the right of the side stack, aligned along the same edge span.
-- No gaps between parts (`gap = 0` in `render.js`).
+- No gaps between parts (`gap = 0` in `render.mjs`).
 - Centering uses the bounds of `SHAPE` and side stack only; `GLUE`/`FOLDING_LINES` do not influence layout.
 - Circle/Ellipse placement: base is tangent‑aligned at its rightmost point to the side stack; mirrored base tangent‑aligned at its leftmost point.
 - Primitives (rect/circle/ellipse) are preserved in SHAPE and not converted to paths.
@@ -30,7 +30,7 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 ## Page & Units
 
-- A4 canvas set in `src/index.js` via `renderNetSvg(..., { page: { width: 210, height: 297 } })`.
+- A4 canvas set in `src/core.mjs` via `renderNetSvg(..., { page: { width: 210, height: 297 } })`.
 - Output `width`/`height` use `--unit` suffix (`mm` default). Geometry uses the same unit scale; convert externally if needed.
 
 ## CLI Flags (bin/shape-2-flat.js)
@@ -76,4 +76,4 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 - Prefer small, focused changes; keep defaults sensible.
 - If behavior changes, update `README.md` and reflect actual groups (`FOLDING_LINES`).
-- Add new CLI options only when necessary; thread them through `bin → src/index.js → render/makeNet` consistently.
+- Add new CLI options only when necessary; thread them through `bin → src/core.mjs → render/makeNet` consistently.
