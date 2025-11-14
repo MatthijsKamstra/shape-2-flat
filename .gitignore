@@ -1,9 +1,5 @@
-## Local helper scripts (keep tracked if needed)
-convert.sh
 
-## Generated exports (SVG output, intermediate exports)
-export/
-assets/net.svg
+
 
 ## Node
 node_modules/
@@ -40,4 +36,15 @@ Thumbs.db
 *.log
 
 # Keep originals/ in repo — it contains source SVGs
+
+# ----------------------------------------------
+
+## Generated exports (SVG output, intermediate exports)
+export/
+assets/net.svg
+
+## Local helper scripts (keep tracked if needed)
+convert.sh
+
+
 .todo
