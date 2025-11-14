@@ -1,15 +1,17 @@
 # Copilot Guide
 
-Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circle/ellipse) into a printable A4 SVG “net” of an extruded prism. Output groups are `SHAPE`, `GLUE`, `FOLDING_LINES`, and `DESIGN`.
+Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circle/ellipse) into a printable A4 SVG "net" of an extruded prism. Output groups are `SHAPE`, `GLUE`, `FOLDING_LINES`, `CUT_LINES` (empty), `DESIGN`, `INFO`, and `BG`.
 
 ## Architecture & Data Flow
 
 - Entry (`bin/shape-2-flat.js`): Parses CLI flags via `yargs`, reads `--input` SVG or `--path` string, then calls `generateNet` from `src/core.mjs` and writes the resulting SVG to `--output`.
 - Orchestration (`src/core.mjs`):
   - `extractPathInfo` (`src/svg-io.mjs`) → prefer `<path>`, also supports `rect`/`circle`/`ellipse`/`polygon`/`polyline`.
-  - `flattenPath` + `simplifyColinear` (`src/path-flatten.mjs`) → polygon points.
+  - `extractLinearPolygon` (`src/path-linear.mjs`) → extract vertices from linear-only paths (M/L/H/V/Z).
+  - `flattenPath` + `simplifyColinear` (`src/path-flatten.mjs`) → polygon points from curved paths.
+  - `computeSegmentLengthsFromPath` (`src/path-segments.mjs`) → exact arc/line lengths for side rectangles.
   - `makeNet` (`src/net.mjs`) → base, mirrored base, side rectangles from edge lengths; merges tiny segments via `minSegment`.
-  - `renderNetSvg` (`src/render.mjs`) → A4 SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `DESIGN`.
+  - `renderNetSvg` (`src/render.mjs`) → A4 SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `CUT_LINES`, `DESIGN`, `INFO`, `BG`.
 
 ## Layout Rules (What to preserve)
 
@@ -23,10 +25,13 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 ## Styles & Grouping
 
-- `SHAPE`: white fill, black stroke (`stroke-width=0.6`).
+- `SHAPE`: Base has gray fill (`#e5e5e5`), Mirror & sides have white fill; all have black stroke (`stroke-width=0.6`).
 - `GLUE`: 7 mm tabs with 45° angled ends on all four sides; for circles/ellipses, vertical seams use saw‑tooth triangular tabs; gray fill (`#e5e5e5`), no stroke.
 - `FOLDING_LINES`: dashed fold lines along tab seams; white stroke (`#FFF`), `stroke-dasharray="2,1"`.
-- `DESIGN`: reserved for overlays; includes a perimeter text label for validation. Page background is white.
+- `CUT_LINES`: Reserved (currently empty).
+- `DESIGN`: Reserved for overlays (currently empty).
+- `INFO`: Perimeter text label at top-left for validation.
+- `BG`: White page background rectangle.
 
 ## Page & Units
 
@@ -63,14 +68,16 @@ Small Node.js CLI that converts an input SVG path (or rect/polygon/polyline/circ
 
 ## Common Prompt Targets (quick references)
 
-- “Rotate base so longest edge is vertical.” → `makeNet` in `src/net.mjs`.
-- “Make side rectangles match edge lengths and depth.” → `sideRects` in `src/net.mjs`.
-- “Keep white fill, black stroke.” → `baseStyle`/`extrudeStyle` in `src/render.mjs`.
-- “Connect shapes without gaps.” → `gap = 0` in `src/render.mjs`.
-- “Fold lines group id?” → `FOLDING_LINES` in `src/render.mjs` (dashed white).
-- “Preserve rect/circle/ellipse primitives.” → `extractPathInfo` in `src/svg-io.mjs` and primitive rendering in `src/render.mjs`.
-- “Saw‑tooth tabs for curved seams.” → vertical seams for circles/ellipses in `src/render.mjs` (GLUE group).
-- “Perimeter overlay text?” → `DESIGN` group in `src/render.mjs`.
+- "Rotate base so longest edge is vertical." → `makeNet` in `src/net.mjs`.
+- "Make side rectangles match edge lengths and depth." → `sideRects` in `src/net.mjs`.
+- "Base has gray fill, mirror/sides white fill, all black stroke." → `baseStyle`/`mirrorStyle`/`extrudeStyle` in `src/render.mjs`.
+- "Connect shapes without gaps." → `gap = 0` in `src/render.mjs`.
+- "Fold lines group id?" → `FOLDING_LINES` in `src/render.mjs` (dashed white).
+- "Preserve rect/circle/ellipse primitives." → `extractPathInfo` in `src/svg-io.mjs` and primitive rendering in `src/render.mjs`.
+- "Saw‑tooth tabs for curved seams." → vertical seams for circles/ellipses in `src/render.mjs` (GLUE group).
+- "Perimeter text label?" → `INFO` group in `src/render.mjs`.
+- "Linear paths without curves?" → `extractLinearPolygon` in `src/path-linear.mjs`.
+- "Arc length calculation?" → `computeSegmentLengthsFromPath` in `src/path-segments.mjs`.
 
 ## Editing Guidelines
 
