@@ -40,10 +40,12 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// Align base so its longest edge runs vertically alongside sx (left side of stack)
 	// We know net.align.yMinEdge..yMaxEdge in base-local coordinates; move base so that edge Y range matches [sy, sy+firstRect.h]
 	const firstRectH = net.sideRects[0]?.h || 0;
+	const depthVal = net.sideRects[0]?.w || 0;
 	const baseOffsetX = sx - net.align.xEdge; // move edge center to sx; since edge is vertical, this aligns left contact visually
 	const baseOffsetY = sy - net.align.yMinEdge;
 	const base = translate(net.base, baseOffsetX, baseOffsetY);
 	const baseBox = bboxOfPoints(base);
+	const baseFootprint = { width: baseBox.width, height: baseBox.height };
 
 	// Now stack rectangles at (sx, sy)
 	let cy = sy;
@@ -225,14 +227,37 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	// Info text: circumference/perimeter equals total side strip length
 	const stripLength = net.sideRects.reduce((s, r) => s + r.h, 0);
-	let infoLines = [`<text x="5" y="10" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Perimeter: ${stripLength.toFixed(2)} ${unit}</text>`];
+	const infoLines = [];
+	const pushInfoLine = text => {
+		const y = 10 + infoLines.length * 6;
+		infoLines.push(`<text x="5" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">${text}</text>`);
+	};
 
-	// Add segment information if available
+	pushInfoLine(`Perimeter (strip length): ${stripLength.toFixed(2)} ${unit}`);
+	pushInfoLine(`Base footprint: ${baseFootprint.width.toFixed(2)} × ${baseFootprint.height.toFixed(2)} ${unit}`);
+	if (depthVal > 0) pushInfoLine(`Depth: ${depthVal.toFixed(2)} ${unit} (panels=${net.sideRects.length})`);
+	pushInfoLine(`Scale: ${scale}×, Margin: ${margin}${unit}`);
+
+	if (originalShape?.kind) {
+		const edgeCount = Array.isArray(originalShape.edgeLengths) ? originalShape.edgeLengths.length : null;
+		let detail = `Input: ${originalShape.kind}`;
+		if (edgeCount != null) {
+			detail += ` edges=${edgeCount}`;
+			if (edgeCount !== net.sideRects.length) detail += ` → panels=${net.sideRects.length}`;
+		}
+		pushInfoLine(detail);
+	}
+
+	net.sideRects.forEach((seg, idx) => {
+		const panelHeight = seg.h.toFixed(2);
+		const panelWidth = depthVal.toFixed(2);
+		pushInfoLine(`Panel ${idx}: type=${seg.type || 'line'}, height=${panelHeight}${unit}, width=${panelWidth}${unit}`);
+	});
+
 	if (originalShape?.edgeLengths && Array.isArray(originalShape.edgeLengths)) {
 		originalShape.edgeLengths.forEach((seg, i) => {
 			const angle = seg.angle !== undefined ? `${(seg.angle * 180 / Math.PI).toFixed(1)}°` : 'N/A';
-			const y = 16 + (i * 6);
-			infoLines.push(`<text x="5" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">segment ${i}: type=${seg.type}, length=${seg.length.toFixed(2)}${unit}, angle=${angle}</text>`);
+			pushInfoLine(`Edge ${i}: type=${seg.type}, length=${seg.length.toFixed(2)}${unit}, angle=${angle}`);
 		});
 	}
 
