@@ -56,9 +56,11 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 		edgeData.push({ i, a, b, w });
 	}
 
+	// Track which polygon edge represents the longest span; used for alignment and ordering later
+	let longestIdx = edgeData.reduce((mi, e, idx, arr) => (e.w > arr[mi].w ? idx : mi), 0);
+
 	// If we have edgeLengths with type and angle info, use the longest straight line's angle directly
 	let targetAngle = null;
-	let longestIdx = 0;
 
 	if (Array.isArray(edgeLengths) && edgeLengths.length > 0) {
 		// Find the longest STRAIGHT LINE segment (type='line') in edgeLengths
@@ -85,8 +87,7 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 		}
 
 		if (targetAngle === null) {
-			// No line segments with angles, use polygon edge
-			longestIdx = edgeData.reduce((mi, e, idx, arr) => (e.w > arr[mi].w ? idx : mi), 0);
+			// No line segments with angles, use polygon edge orientation
 			const v = edgeVec(edgeData[longestIdx].a, edgeData[longestIdx].b);
 			targetAngle = Math.atan2(v[1], v[0]);
 		}
@@ -132,7 +133,8 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 	} else {
 		// Pure rectangular shapes or pure curved shapes: use original logic (longest edge vertical)
 		rotateBy = (Math.PI / 2) - targetAngle;
-	} const c0 = centroid(poly);
+	}
+	const c0 = centroid(poly);
 	const base = rotatePolygon(poly, rotateBy);
 	const cBase = centroid(base);
 
