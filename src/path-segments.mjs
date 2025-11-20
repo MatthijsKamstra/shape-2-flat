@@ -1,16 +1,7 @@
 "use strict";
 
-let svgPathPropertiesNode = null;
-if (typeof window === 'undefined') {
-	const { createRequire } = await import('module');
-	const requireNode = createRequire(import.meta.url);
-	try {
-		const mod = requireNode('svg-path-properties');
-		svgPathPropertiesNode = mod?.svgPathProperties || mod?.default || null;
-	} catch {
-		svgPathPropertiesNode = null;
-	}
-}
+// Geometry helpers (length + centers)
+import { arcLength, curveLength } from './geometry.mjs';
 
 function numberMatcher() {
 	return /[+-]?(?:\d+\.\d+|\d+\.|\.\d+|\d+)(?:[eE][+-]?\d+)?/y; // sticky
@@ -75,279 +66,204 @@ function skipSeparators(src, pos) {
 }
 
 // Returns an array of { type: 'line'|'arc'|'curve', length }
-// Supports M/m, L/l, H/h, V/v, A/a, C/c, Q/q, S/s, T/t, Z/z
 function computeSegmentLengthsFromPath(d) {
 	if (!d) return null;
 	const src = d;
-	let pos = 0;
-	let cmd = null;
-	let curX = 0, curY = 0;
-	let subX = 0, subY = 0;
-	let lastControlX = null, lastControlY = null; // For smooth curves S/T
-	let haveUnsupported = false;
-	const segs = [];
+	const state = {
+		src,
+		pos: 0,
+		cmd: null,
+		curX: 0,
+		curY: 0,
+		subX: 0,
+		subY: 0,
+		lastControlX: null,
+		lastControlY: null,
+		segs: [],
+		unsupported: false
+	};
 
-	function arcLength(x0, y0, rx, ry, xRot, largeArc, sweep, x1, y1) {
-		const piece = `M ${x0},${y0} A ${rx} ${ry} ${xRot} ${largeArc} ${sweep} ${x1} ${y1}`;
-		try {
-			if (svgPathPropertiesNode) {
-				const props = new svgPathPropertiesNode(piece);
-				return props.getTotalLength();
-			}
-			// Browser fallback: use SVGPathElement
-			if (typeof document !== 'undefined') {
-				const svgNS = 'http://www.w3.org/2000/svg';
-				const svg = document.createElementNS(svgNS, 'svg');
-				const path = document.createElementNS(svgNS, 'path');
-				path.setAttribute('d', piece);
-				svg.appendChild(path);
-				return path.getTotalLength();
-			}
-			return Math.hypot(x1 - x0, y1 - y0);
-		} catch {
-			return Math.hypot(x1 - x0, y1 - y0);
-		}
-	}
-
-	function curveLength(pathData) {
-		try {
-			if (svgPathPropertiesNode) {
-				const props = new svgPathPropertiesNode(pathData);
-				return props.getTotalLength();
-			}
-			// Browser fallback: use SVGPathElement
-			if (typeof document !== 'undefined') {
-				const svgNS = 'http://www.w3.org/2000/svg';
-				const svg = document.createElementNS(svgNS, 'svg');
-				const path = document.createElementNS(svgNS, 'path');
-				path.setAttribute('d', pathData);
-				svg.appendChild(path);
-				return path.getTotalLength();
-			}
-			// Fallback: approximate with straight line
-			const match = pathData.match(/M\s*([\d.+-]+)[,\s]+([\d.+-]+).*\s+([\d.+-]+)[,\s]+([\d.+-]+)$/);
-			if (match) {
-				const x0 = parseFloat(match[1]), y0 = parseFloat(match[2]);
-				const x1 = parseFloat(match[3]), y1 = parseFloat(match[4]);
-				return Math.hypot(x1 - x0, y1 - y0);
-			}
-			return 0;
-		} catch {
-			return 0;
-		}
-	}
-
-	while (pos < src.length) {
-		pos = skipSeparators(src, pos);
-		const ch = src[pos];
-		if (!ch) break;
-		if (isCommand(ch)) { cmd = ch; pos++; }
-		else if (cmd == null) { break; }
-
-		const isRel = cmd >= 'a' && cmd <= 'z';
-		const C = cmd.toUpperCase();
-
-		if (C === 'M') {
-			// move to, subsequent pairs are treated as implicit L
+	const handlers = {
+		M(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break;
-				pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break;
-				pos = n2.next;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break;
+				state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break;
+				state.pos = n2.next;
 				let x = n1.value, y = n2.value;
-				if (isRel) { x += curX; y += curY; }
-				curX = x; curY = y; subX = x; subY = y;
-				// any additional pairs after the first are implicit L
-				// Peek if more numbers follow without a new command
-				const savePos = pos;
-				pos = skipSeparators(src, pos);
-				const nxt = readNumber(src, pos);
-				if (nxt.value == null) { pos = savePos; break; }
-				// revert and handle as implicit L in next loop iteration by setting cmd=L
-				pos = savePos; cmd = isRel ? 'l' : 'L';
+				if (isRel) { x += state.curX; y += state.curY; }
+				state.curX = x; state.curY = y; state.subX = x; state.subY = y;
+				const savePos = state.pos;
+				state.pos = skipSeparators(src, state.pos);
+				const nxt = readNumber(src, state.pos);
+				if (nxt.value == null) { state.pos = savePos; break; }
+				state.pos = savePos; state.cmd = isRel ? 'l' : 'L';
 			}
-			continue;
-		}
-		if (C === 'L') {
+		},
+		L(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break;
-				pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break;
-				pos = n2.next;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break;
+				state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break;
+				state.pos = n2.next;
 				let x = n1.value, y = n2.value;
-				if (isRel) { x += curX; y += curY; }
-				const len = Math.hypot(x - curX, y - curY);
-				const angle = Math.atan2(y - curY, x - curX);
-				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: x, y2: y });
-				lastControlX = null; lastControlY = null;
-				curX = x; curY = y;
+				if (isRel) { x += state.curX; y += state.curY; }
+				const len = Math.hypot(x - state.curX, y - state.curY);
+				const angle = Math.atan2(y - state.curY, x - state.curX);
+				state.segs.push({ type: 'line', length: len, angle, x1: state.curX, y1: state.curY, x2: x, y2: y });
+				state.lastControlX = null; state.lastControlY = null;
+				state.curX = x; state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'H') {
+		},
+		H(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break;
-				pos = n1.next;
-				let x = n1.value; if (isRel) x += curX;
-				const len = Math.abs(x - curX);
-				const angle = x > curX ? 0 : Math.PI; // horizontal: 0° right, 180° left
-				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: x, y2: curY });
-				lastControlX = null; lastControlY = null;
-				curX = x;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break;
+				state.pos = n1.next;
+				let x = n1.value; if (isRel) x += state.curX;
+				const len = Math.abs(x - state.curX);
+				const angle = x > state.curX ? 0 : Math.PI;
+				state.segs.push({ type: 'line', length: len, angle, x1: state.curX, y1: state.curY, x2: x, y2: state.curY });
+				state.lastControlX = null; state.lastControlY = null;
+				state.curX = x;
 			}
-			continue;
-		}
-		if (C === 'V') {
+		},
+		V(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break;
-				pos = n1.next;
-				let y = n1.value; if (isRel) y += curY;
-				const len = Math.abs(y - curY);
-				const angle = y > curY ? Math.PI / 2 : -Math.PI / 2; // vertical: 90° down, -90° up
-				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: curX, y2: y });
-				lastControlX = null; lastControlY = null;
-				curY = y;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break;
+				state.pos = n1.next;
+				let y = n1.value; if (isRel) y += state.curY;
+				const len = Math.abs(y - state.curY);
+				const angle = y > state.curY ? Math.PI / 2 : -Math.PI / 2;
+				state.segs.push({ type: 'line', length: len, angle, x1: state.curX, y1: state.curY, x2: state.curX, y2: y });
+				state.lastControlX = null; state.lastControlY = null;
+				state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'A') {
+		},
+		A(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break; pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break; pos = skipSeparators(src, n2.next);
-				const n3 = readNumber(src, pos); if (n3.value == null) break; pos = skipSeparators(src, n3.next);
-				const n4 = readNumber(src, pos); if (n4.value == null) break; pos = skipSeparators(src, n4.next);
-				const n5 = readNumber(src, pos); if (n5.value == null) break; pos = skipSeparators(src, n5.next);
-				const n6 = readNumber(src, pos); if (n6.value == null) break; pos = skipSeparators(src, n6.next);
-				const n7 = readNumber(src, pos); if (n7.value == null) break; pos = n7.next;
-				const rx = n1.value, ry = n2.value, xRot = n3.value;
-				const largeArc = n4.value, sweep = n5.value;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break; state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break; state.pos = skipSeparators(src, n2.next);
+				const n3 = readNumber(src, state.pos); if (n3.value == null) break; state.pos = skipSeparators(src, n3.next);
+				const n4 = readNumber(src, state.pos); if (n4.value == null) break; state.pos = skipSeparators(src, n4.next);
+				const n5 = readNumber(src, state.pos); if (n5.value == null) break; state.pos = skipSeparators(src, n5.next);
+				const n6 = readNumber(src, state.pos); if (n6.value == null) break; state.pos = skipSeparators(src, n6.next);
+				const n7 = readNumber(src, state.pos); if (n7.value == null) break; state.pos = n7.next;
+				let rx = n1.value, ry = n2.value, xRot = n3.value;
+				let largeArc = n4.value, sweep = n5.value;
 				let x = n6.value, y = n7.value;
-				if (isRel) { x += curX; y += curY; }
-				const len = arcLength(curX, curY, rx, ry, xRot, largeArc, sweep, x, y);
-				segs.push({ type: 'arc', length: len, arcParams: { x1: curX, y1: curY, x2: x, y2: y, rx, ry, xRot, largeArc, sweep } });
-				lastControlX = null; lastControlY = null; // Reset control point
-				curX = x; curY = y;
+				if (isRel) { x += state.curX; y += state.curY; }
+				const len = arcLength(state.curX, state.curY, rx, ry, xRot, largeArc, sweep, x, y);
+				state.segs.push({ type: 'arc', length: len, arcParams: { x1: state.curX, y1: state.curY, x2: x, y2: y, rx, ry, xRot, largeArc, sweep } });
+				state.lastControlX = null; state.lastControlY = null;
+				state.curX = x; state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'C') {
-			// Cubic Bézier: C x1 y1 x2 y2 x y (or c dx1 dy1 dx2 dy2 dx dy)
+		},
+		C(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break; pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break; pos = skipSeparators(src, n2.next);
-				const n3 = readNumber(src, pos); if (n3.value == null) break; pos = skipSeparators(src, n3.next);
-				const n4 = readNumber(src, pos); if (n4.value == null) break; pos = skipSeparators(src, n4.next);
-				const n5 = readNumber(src, pos); if (n5.value == null) break; pos = skipSeparators(src, n5.next);
-				const n6 = readNumber(src, pos); if (n6.value == null) break; pos = n6.next;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break; state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break; state.pos = skipSeparators(src, n2.next);
+				const n3 = readNumber(src, state.pos); if (n3.value == null) break; state.pos = skipSeparators(src, n3.next);
+				const n4 = readNumber(src, state.pos); if (n4.value == null) break; state.pos = skipSeparators(src, n4.next);
+				const n5 = readNumber(src, state.pos); if (n5.value == null) break; state.pos = skipSeparators(src, n5.next);
+				const n6 = readNumber(src, state.pos); if (n6.value == null) break; state.pos = n6.next;
 				let x1 = n1.value, y1 = n2.value;
 				let x2 = n3.value, y2 = n4.value;
 				let x = n5.value, y = n6.value;
 				if (isRel) {
-					x1 += curX; y1 += curY;
-					x2 += curX; y2 += curY;
-					x += curX; y += curY;
+					x1 += state.curX; y1 += state.curY;
+					x2 += state.curX; y2 += state.curY;
+					x += state.curX; y += state.curY;
 				}
-				const pathData = `M ${curX},${curY} C ${x1},${y1} ${x2},${y2} ${x},${y}`;
+				const pathData = `M ${state.curX},${state.curY} C ${x1},${y1} ${x2},${y2} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, cx2: x2, cy2: y2 });
-				lastControlX = x2; lastControlY = y2;
-				curX = x; curY = y;
+				state.segs.push({ type: 'curve', length: len, x1: state.curX, y1: state.curY, x2: x, y2: y, cx1: x1, cy1: y1, cx2: x2, cy2: y2 });
+				state.lastControlX = x2; state.lastControlY = y2;
+				state.curX = x; state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'S') {
-			// Smooth cubic Bézier: S x2 y2 x y (or s dx2 dy2 dx dy)
-			// First control point is reflection of previous second control point
+		},
+		S(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break; pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break; pos = skipSeparators(src, n2.next);
-				const n3 = readNumber(src, pos); if (n3.value == null) break; pos = skipSeparators(src, n3.next);
-				const n4 = readNumber(src, pos); if (n4.value == null) break; pos = n4.next;
-				// Reflect previous control point
-				const x1 = lastControlX != null ? 2 * curX - lastControlX : curX;
-				const y1 = lastControlY != null ? 2 * curY - lastControlY : curY;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break; state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break; state.pos = skipSeparators(src, n2.next);
+				const n3 = readNumber(src, state.pos); if (n3.value == null) break; state.pos = skipSeparators(src, n3.next);
+				const n4 = readNumber(src, state.pos); if (n4.value == null) break; state.pos = n4.next;
+				const x1 = state.lastControlX != null ? 2 * state.curX - state.lastControlX : state.curX;
+				const y1 = state.lastControlY != null ? 2 * state.curY - state.lastControlY : state.curY;
 				let x2 = n1.value, y2 = n2.value;
 				let x = n3.value, y = n4.value;
-				if (isRel) {
-					x2 += curX; y2 += curY;
-					x += curX; y += curY;
-				}
-				const pathData = `M ${curX},${curY} C ${x1},${y1} ${x2},${y2} ${x},${y}`;
+				if (isRel) { x2 += state.curX; y2 += state.curY; x += state.curX; y += state.curY; }
+				const pathData = `M ${state.curX},${state.curY} C ${x1},${y1} ${x2},${y2} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, cx2: x2, cy2: y2 });
-				lastControlX = x2; lastControlY = y2;
-				curX = x; curY = y;
+				state.segs.push({ type: 'curve', length: len, x1: state.curX, y1: state.curY, x2: x, y2: y, cx1: x1, cy1: y1, cx2: x2, cy2: y2 });
+				state.lastControlX = x2; state.lastControlY = y2;
+				state.curX = x; state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'Q') {
-			// Quadratic Bézier: Q x1 y1 x y (or q dx1 dy1 dx dy)
+		},
+		Q(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break; pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break; pos = skipSeparators(src, n2.next);
-				const n3 = readNumber(src, pos); if (n3.value == null) break; pos = skipSeparators(src, n3.next);
-				const n4 = readNumber(src, pos); if (n4.value == null) break; pos = n4.next;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break; state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break; state.pos = skipSeparators(src, n2.next);
+				const n3 = readNumber(src, state.pos); if (n3.value == null) break; state.pos = skipSeparators(src, n3.next);
+				const n4 = readNumber(src, state.pos); if (n4.value == null) break; state.pos = n4.next;
 				let x1 = n1.value, y1 = n2.value;
 				let x = n3.value, y = n4.value;
-				if (isRel) {
-					x1 += curX; y1 += curY;
-					x += curX; y += curY;
-				}
-				const pathData = `M ${curX},${curY} Q ${x1},${y1} ${x},${y}`;
+				if (isRel) { x1 += state.curX; y1 += state.curY; x += state.curX; y += state.curY; }
+				const pathData = `M ${state.curX},${state.curY} Q ${x1},${y1} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, isQuadratic: true });
-				lastControlX = x1; lastControlY = y1;
-				curX = x; curY = y;
+				state.segs.push({ type: 'curve', length: len, x1: state.curX, y1: state.curY, x2: x, y2: y, cx1: x1, cy1: y1, isQuadratic: true });
+				state.lastControlX = x1; state.lastControlY = y1;
+				state.curX = x; state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'T') {
-			// Smooth quadratic Bézier: T x y (or t dx dy)
-			// Control point is reflection of previous control point
+		},
+		T(isRel) {
 			for (; ;) {
-				pos = skipSeparators(src, pos);
-				const n1 = readNumber(src, pos); if (n1.value == null) break; pos = skipSeparators(src, n1.next);
-				const n2 = readNumber(src, pos); if (n2.value == null) break; pos = n2.next;
-				// Reflect previous control point
-				const x1 = lastControlX != null ? 2 * curX - lastControlX : curX;
-				const y1 = lastControlY != null ? 2 * curY - lastControlY : curY;
+				state.pos = skipSeparators(src, state.pos);
+				const n1 = readNumber(src, state.pos); if (n1.value == null) break; state.pos = skipSeparators(src, n1.next);
+				const n2 = readNumber(src, state.pos); if (n2.value == null) break; state.pos = n2.next;
+				const x1 = state.lastControlX != null ? 2 * state.curX - state.lastControlX : state.curX;
+				const y1 = state.lastControlY != null ? 2 * state.curY - state.lastControlY : state.curY;
 				let x = n1.value, y = n2.value;
-				if (isRel) {
-					x += curX; y += curY;
-				}
-				const pathData = `M ${curX},${curY} Q ${x1},${y1} ${x},${y}`;
+				if (isRel) { x += state.curX; y += state.curY; }
+				const pathData = `M ${state.curX},${state.curY} Q ${x1},${y1} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, isQuadratic: true });
-				lastControlX = x1; lastControlY = y1;
-				curX = x; curY = y;
+				state.segs.push({ type: 'curve', length: len, x1: state.curX, y1: state.curY, x2: x, y2: y, cx1: x1, cy1: y1, isQuadratic: true });
+				state.lastControlX = x1; state.lastControlY = y1;
+				state.curX = x; state.curY = y;
 			}
-			continue;
-		}
-		if (C === 'Z') {
-			const len = Math.hypot(subX - curX, subY - curY);
+		},
+		Z() {
+			const len = Math.hypot(state.subX - state.curX, state.subY - state.curY);
 			if (len > 0) {
-				const angle = Math.atan2(subY - curY, subX - curX);
-				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: subX, y2: subY });
+				const angle = Math.atan2(state.subY - state.curY, state.subX - state.curX);
+				state.segs.push({ type: 'line', length: len, angle, x1: state.curX, y1: state.curY, x2: state.subX, y2: state.subY });
 			}
-			lastControlX = null; lastControlY = null;
-			curX = subX; curY = subY;
-			continue;
+			state.lastControlX = null; state.lastControlY = null;
+			state.curX = state.subX; state.curY = state.subY;
 		}
-		// Unsupported command -> signal fallback
-		haveUnsupported = true;
-		break;
-	}
+	};
 
-	if (haveUnsupported) return null;
-	return segs;
+	while (state.pos < src.length) {
+		state.pos = skipSeparators(src, state.pos);
+		const ch = src[state.pos];
+		if (!ch) break;
+		if (isCommand(ch)) { state.cmd = ch; state.pos++; }
+		else if (state.cmd == null) { break; }
+		const isRel = state.cmd >= 'a' && state.cmd <= 'z';
+		const C = state.cmd.toUpperCase();
+		const handler = handlers[C];
+		if (!handler) { state.unsupported = true; break; }
+		handler(isRel);
+	}
+	if (state.unsupported) return null;
+	return state.segs;
 }
 
 export { computeSegmentLengthsFromPath };
