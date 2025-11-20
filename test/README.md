@@ -213,6 +213,7 @@ The test suite covers all aspects of the shape glue tabs feature:
 ### Key Features Tested
 
 **Glue Tab Implementation:**
+
 - Full-length tabs along each edge
 - Bilateral tabs (one on each side of fold line)
 - 7mm tab width/height
@@ -220,17 +221,20 @@ The test suite covers all aspects of the shape glue tabs feature:
 - Gray fill (#e5e5e5) without stroke
 
 **Fold Line Implementation:**
+
 - White dashed lines along edges
 - Separate groups for sides vs. shapes
 - `stroke-dasharray` for dashed appearance
 
 **Group Separation:**
+
 - `GLUE_SIDE`: Tabs for side panel rectangles
 - `GLUE_SHAPE`: Tabs for base and mirror shape edges
 - `FOLDING_SIDE`: Fold lines for side panel edges
 - `FOLDING_SHAPE`: Fold lines for base and mirror shape edges
 
 **Shape Type Preservation:**
+
 - Rect elements stay as `<rect>` (not converted to path)
 - Circle/ellipse stay as primitives
 - Path elements preserved with transforms
@@ -272,6 +276,8 @@ npm run test:tabs
 
 # Run with shell script
 bash test/run-tests.sh
+```
+
 ```
 
 ```
