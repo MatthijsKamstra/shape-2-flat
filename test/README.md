@@ -55,14 +55,43 @@ The test suite covers all supported SVG path commands and variations:
 - Handling when already at starting point
 - Case-insensitive z/Z commands
 
-#### 7. **Complex Paths** - 4 tests
+#### 7. **Cubic Bézier (C/c)** - 4 tests
+
+- Absolute and relative cubic Bézier curves
+- Multiple curves in sequence
+- Multiple coordinate sets in single command
+- Length calculation using svg-path-properties
+
+#### 8. **Smooth Cubic Bézier (S/s)** - 4 tests
+
+- Smooth curves after previous C command
+- S command without previous curve
+- Relative smooth cubic Bézier
+- Control point reset after non-curve commands
+
+#### 9. **Quadratic Bézier (Q/q)** - 4 tests
+
+- Absolute and relative quadratic Bézier curves
+- Multiple curves in sequence
+- Multiple coordinate sets in single command
+
+#### 10. **Smooth Quadratic Bézier (T/t)** - 4 tests
+
+- Smooth curves after previous Q command
+- T command without previous curve
+- Relative smooth quadratic Bézier
+- Chained T commands
+
+#### 11. **Complex Paths** - 6 tests
 
 - Rectangle paths (4 sides)
 - Triangle paths (3 sides)
 - Mixed absolute and relative commands
 - Paths combining arcs and lines
+- Paths with curves, arcs, and lines
+- Paths with smooth curves after non-curve commands
 
-#### 8. **Edge Cases** - 11 tests
+#### 12. **Edge Cases** - 11 tests
 
 - Empty paths
 - Null input
@@ -71,9 +100,9 @@ The test suite covers all supported SVG path commands and variations:
 - Minimal whitespace parsing
 - Comma separators
 - Zero-length segments
-- Unsupported commands (C, Q, S, T) returning null
+- Bézier curve command support (C, Q, S, T)
 
-#### 9. **Number Parsing** - 6 tests
+#### 13. **Number Parsing** - 6 tests
 
 - Negative numbers
 - Decimal numbers
@@ -82,7 +111,7 @@ The test suite covers all supported SVG path commands and variations:
 - Exponential notation (e.g., `1e2`)
 - Negative exponents (e.g., `1e-1`)
 
-#### 10. **Angle Calculations** - 5 tests
+#### 14. **Angle Calculations** - 5 tests
 
 - Horizontal lines (0° and 180°)
 - Vertical lines (90° and -90°)
@@ -90,24 +119,23 @@ The test suite covers all supported SVG path commands and variations:
 
 ### Total Coverage
 
-**52 tests** covering:
+**70 tests** covering:
 
-- All supported SVG path commands: M, L, H, V, A, Z (absolute and relative)
-- Length calculations for lines and arcs
+- **All SVG path commands**: M, L, H, V, A, C, Q, S, T, Z (absolute and relative)
+- Length calculations for lines, arcs, and Bézier curves
 - Angle calculations for line segments
+- Control point tracking for smooth curve commands
 - Edge cases and error conditions
 - Number parsing variations
 
-### Unsupported Commands
+### Curve Implementation
 
-The function correctly returns `null` for unsupported commands:
+Bézier curves (C, Q, S, T) are fully supported using:
 
-- **C/c** - Cubic Bézier curve
-- **Q/q** - Quadratic Bézier curve
-- **S/s** - Smooth cubic Bézier
-- **T/t** - Smooth quadratic Bézier
-
-This signals the need to fall back to alternative path flattening methods.
+- `svg-path-properties` library for accurate curve length calculation in Node.js
+- Browser fallback using native `SVGPathElement.getTotalLength()`
+- Proper control point reflection for smooth curve commands (S/T)
+- Control point reset when encountering non-curve commands
 
 ### Test Framework
 

@@ -52,7 +52,8 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 
 ## Notes and limitations
 
-- Arcs (A) are handled via sampling; tolerance controls detail
+- **All SVG path commands are supported**: M, L, H, V, A, C, Q, S, T, Z (both absolute and relative)
+- Bézier curves (C, Q, S, T) and arcs (A) use `svg-path-properties` for accurate length calculation
 - Self-intersecting paths are not supported
 - For rectangles: side rectangles are four segments ordered long, short, long, short; connected without gaps
 - Arc handling: arc segments contribute exact arc length to side‑rect heights. For pure circle/ellipse inputs, the side stack uses one rectangle whose height equals the circumference.

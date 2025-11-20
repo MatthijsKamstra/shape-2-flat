@@ -10,7 +10,7 @@
 
 - `generateNet` (`src/core.mjs`) picks linear extraction first (`extractLinearPolygon`), otherwise samples curves via `flattenPath`; retries with tighter tolerance if fewer than 3 points.
 - `extractPathInfo` (`src/svg-io.mjs`) prefers `<path>`, handles `rect/circle/ellipse/polygon/polyline`, applies accumulated transforms with `svgpath`, and records primitive params for rendering.
-- `computeSegmentLengthsFromPath` (`src/path-segments.mjs`) reads M/L/H/V/A/Z only; stores line angles, collapses all arc pieces into one segment for circles/ellipses to keep side stack single-piece.
+- `computeSegmentLengthsFromPath` (`src/path-segments.mjs`) supports all SVG path commands (M/L/H/V/A/C/Q/S/T/Z absolute and relative); stores line angles, uses `svg-path-properties` for accurate arc and Bézier curve length calculation, tracks control points for smooth curves (S/T), and collapses all arc pieces into one segment for circles/ellipses to keep side stack single-piece.
 - `makeNet` (`src/net.mjs`) rotates the polygon so the longest straight edge is vertical (uses segment angles when arcs are present), mirrors horizontally, and merges segments shorter than `minSegment` before building side rectangles.
 
 ## Geometry & Layout Rules

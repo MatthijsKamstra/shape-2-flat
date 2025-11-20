@@ -229,6 +229,124 @@ describe('computeSegmentLengthsFromPath', () => {
 		});
 	});
 
+	describe('Cubic Bézier (C/c)', () => {
+		it('should calculate length for absolute cubic Bézier', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10');
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 30, 'Curve should be longer than straight line');
+		});
+
+		it('should calculate length for relative cubic Bézier', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 c 10,0 20,10 30,10');
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 0);
+		});
+
+		it('should handle multiple cubic Bézier curves', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10 C 40,10 50,0 60,0');
+			assert.equal(result.length, 2);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'curve');
+		});
+
+		it('should handle multiple coordinate sets in single C command', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10 40,10 50,0 60,0');
+			assert.equal(result.length, 2);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'curve');
+		});
+	});
+
+	describe('Smooth Cubic Bézier (S/s)', () => {
+		it('should calculate length for smooth cubic Bézier after C', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10 S 50,20 60,20');
+			assert.equal(result.length, 2);
+			assert.equal(result[1].type, 'curve');
+			assert.ok(result[1].length > 0);
+		});
+
+		it('should handle S without previous curve (uses current point)', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 S 10,10 20,0');
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 0);
+		});
+
+		it('should handle relative smooth cubic Bézier', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10 s 20,10 30,10');
+			assert.equal(result.length, 2);
+			assert.equal(result[1].type, 'curve');
+		});
+
+		it('should reset control point after non-curve command', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10 L 40,10 S 50,20 60,20');
+			assert.equal(result.length, 3);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'line');
+			assert.equal(result[2].type, 'curve');
+		});
+	});
+
+	describe('Quadratic Bézier (Q/q)', () => {
+		it('should calculate length for absolute quadratic Bézier', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0');
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 20, 'Curve should be longer than straight line');
+		});
+
+		it('should calculate length for relative quadratic Bézier', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 q 10,10 20,0');
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 0);
+		});
+
+		it('should handle multiple quadratic Bézier curves', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0 Q 30,-10 40,0');
+			assert.equal(result.length, 2);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'curve');
+		});
+
+		it('should handle multiple coordinate sets in single Q command', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0 30,-10 40,0');
+			assert.equal(result.length, 2);
+		});
+	});
+
+	describe('Smooth Quadratic Bézier (T/t)', () => {
+		it('should calculate length for smooth quadratic Bézier after Q', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0 T 40,0');
+			assert.equal(result.length, 2);
+			assert.equal(result[1].type, 'curve');
+			assert.ok(result[1].length > 0);
+		});
+
+		it('should handle T without previous curve (uses current point)', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 T 20,0');
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 0);
+		});
+
+		it('should handle relative smooth quadratic Bézier', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0 t 20,0');
+			assert.equal(result.length, 2);
+			assert.equal(result[1].type, 'curve');
+		});
+
+		it('should handle chained T commands', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0 T 40,0 T 60,0');
+			assert.equal(result.length, 3);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'curve');
+			assert.equal(result[2].type, 'curve');
+		});
+	});
+
 	describe('Complex paths', () => {
 		it('should handle rectangle path', () => {
 			const result = computeSegmentLengthsFromPath('M 0,0 L 100,0 L 100,50 L 0,50 Z');
@@ -263,6 +381,25 @@ describe('computeSegmentLengthsFromPath', () => {
 			assert.equal(result[1].type, 'arc');
 			assert.equal(result[2].type, 'line');
 			assert.equal(result[3].type, 'line');
+		});
+
+		it('should handle path with curves, arcs, and lines', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 L 10,0 Q 15,5 20,0 C 25,0 30,5 35,5 A 5 5 0 0 1 40,10 Z');
+			assert.equal(result.length, 5);
+			assert.equal(result[0].type, 'line');
+			assert.equal(result[1].type, 'curve');
+			assert.equal(result[2].type, 'curve');
+			assert.equal(result[3].type, 'arc');
+			assert.equal(result[4].type, 'line');
+		});
+
+		it('should handle path with smooth curves after non-curve commands', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 L 10,0 S 20,10 30,10 L 40,10 T 50,0');
+			assert.equal(result.length, 4);
+			assert.equal(result[0].type, 'line');
+			assert.equal(result[1].type, 'curve');
+			assert.equal(result[2].type, 'line');
+			assert.equal(result[3].type, 'curve');
 		});
 	});
 
@@ -306,24 +443,34 @@ describe('computeSegmentLengthsFromPath', () => {
 			assertClose(result[1].length, 10);
 		});
 
-		it('should return null for unsupported commands (C)', () => {
+		it('should handle cubic Bézier curves (C)', () => {
 			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10');
-			assert.equal(result, null);
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 0, 'Curve length should be positive');
 		});
 
-		it('should return null for unsupported commands (Q)', () => {
+		it('should handle quadratic Bézier curves (Q)', () => {
 			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0');
-			assert.equal(result, null);
+			assert.equal(result.length, 1);
+			assert.equal(result[0].type, 'curve');
+			assert.ok(result[0].length > 0, 'Curve length should be positive');
 		});
 
-		it('should return null for unsupported commands (S)', () => {
-			const result = computeSegmentLengthsFromPath('M 0,0 S 10,10 20,0');
-			assert.equal(result, null);
+		it('should handle smooth cubic Bézier (S)', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 C 10,0 20,10 30,10 S 50,20 60,20');
+			assert.equal(result.length, 2);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'curve');
+			assert.ok(result[1].length > 0, 'Smooth curve length should be positive');
 		});
 
-		it('should return null for unsupported commands (T)', () => {
-			const result = computeSegmentLengthsFromPath('M 0,0 T 10,10');
-			assert.equal(result, null);
+		it('should handle smooth quadratic Bézier (T)', () => {
+			const result = computeSegmentLengthsFromPath('M 0,0 Q 10,10 20,0 T 40,0');
+			assert.equal(result.length, 2);
+			assert.equal(result[0].type, 'curve');
+			assert.equal(result[1].type, 'curve');
+			assert.ok(result[1].length > 0, 'Smooth curve length should be positive');
 		});
 	});
 
