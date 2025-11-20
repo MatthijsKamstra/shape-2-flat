@@ -60,7 +60,12 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			x1: seg.x1,
 			y1: seg.y1,
 			x2: seg.x2,
-			y2: seg.y2
+			y2: seg.y2,
+			cx1: seg.cx1,
+			cy1: seg.cy1,
+			cx2: seg.cx2,
+			cy2: seg.cy2,
+			isQuadratic: seg.isQuadratic
 		};
 		cy += seg.h;
 		return r;
@@ -109,7 +114,12 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		x1: r.x1,
 		y1: r.y1,
 		x2: r.x2,
-		y2: r.y2
+		y2: r.y2,
+		cx1: r.cx1,
+		cy1: r.cy1,
+		cx2: r.cx2,
+		cy2: r.cy2,
+		isQuadratic: r.isQuadratic
 	}));
 	// no tabs
 
@@ -513,6 +523,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		const stackRightX0 = sx + (stacked[0]?.w || 0);
 		const deltaBaseX = stackLeftX0 - baseBox.maxX;
 		const deltaMirrorX = stackRightX0 - mirrorBox.minX;
+		const cosR = Math.cos(rotation);
+		const sinR = Math.sin(rotation);
 
 		for (const seg of stackedC) {
 			if ((seg.type === 'arc' || seg.type === 'curve') && seg.arcParams) {
@@ -528,8 +540,6 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 				bx *= scale;
 				by *= scale;
 
-				const cosR = Math.cos(rotation);
-				const sinR = Math.sin(rotation);
 				let dbx = bx - c0x;
 				let dby = by - c0y;
 				bx = c0x + dbx * cosR - dby * sinR;
@@ -589,12 +599,90 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 				debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
 				debugParts.push(`<ellipse cx="${mx}" cy="${my}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="cyan" stroke-width="0.3" stroke-dasharray="1,1"/>`);
 			}
+
+			// Handle CURVE segments - fit a circle to the curve
+			if (seg.type === 'curve' && seg.x1 !== undefined) {
+				// Fit a circle using the endpoints and control points
+				// For quadratic curves: use control point as circle center approximation
+				// For cubic curves: use midpoint of control points
+				let cx0, cy0, r0;
+
+				if (seg.isQuadratic && seg.cx1 !== undefined) {
+					// Quadratic: control point is approximately the circle center
+					cx0 = seg.cx1;
+					cy0 = seg.cy1;
+					// Radius is average distance to endpoints
+					const d1 = Math.hypot(cx0 - seg.x1, cy0 - seg.y1);
+					const d2 = Math.hypot(cx0 - seg.x2, cy0 - seg.y2);
+					r0 = (d1 + d2) / 2;
+				} else if (seg.cx1 !== undefined && seg.cx2 !== undefined) {
+					// Cubic: use midpoint of two control points as center approximation
+					cx0 = (seg.cx1 + seg.cx2) / 2;
+					cy0 = (seg.cy1 + seg.cy2) / 2;
+					// Radius is average distance to endpoints
+					const d1 = Math.hypot(cx0 - seg.x1, cy0 - seg.y1);
+					const d2 = Math.hypot(cx0 - seg.x2, cy0 - seg.y2);
+					r0 = (d1 + d2) / 2;
+				} else {
+					// Fallback: use midpoint of endpoints
+					cx0 = (seg.x1 + seg.x2) / 2;
+					cy0 = (seg.y1 + seg.y2) / 2;
+					r0 = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / 2;
+				}
+
+				// Transform for BASE shape
+				let bx = cx0 * scale;
+				let by = cy0 * scale;
+
+				let dbx = bx - c0x;
+				let dby = by - c0y;
+				bx = c0x + dbx * cosR - dby * sinR;
+				by = c0y + dbx * sinR + dby * cosR;
+
+				bx += dx + baseOffsetX + deltaBaseX;
+				by += dy + baseOffsetY;
+
+				const baseR = r0 * scale;
+
+				// Calculate number of spikes based on perimeter
+				const curvePerimeter = 2 * Math.PI * baseR;
+				const numSpikes = Math.max(12, Math.min(48, Math.round(curvePerimeter / 8)));
+
+				// Generate star tabs for base
+				addArcStarTabs(bx, by, baseR, baseR, numSpikes);
+
+				// Debug circle for base
+				debugParts.push(`<circle cx="${bx}" cy="${by}" r="${baseR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${bx}" cy="${by}" r="1" fill="red"/>`);
+
+				// Transform for MIRROR shape
+				let mx = cx0 * scale;
+				let my = cy0 * scale;
+
+				let dmx = mx - c0x;
+				let dmy = my - c0y;
+				mx = c0x + dmx * cosR - dmy * sinR;
+				my = c0y + dmx * sinR + dmy * cosR;
+
+				mx -= cBx;
+				my -= cBy;
+				mx = -mx;
+				mx += cBx;
+				my += cBy;
+
+				mx += mirrorOffsetX + deltaMirrorX + dx;
+				my += mirrorOffsetY + dy;
+
+				// Generate star tabs for mirror
+				addArcStarTabs(mx, my, baseR, baseR, numSpikes);
+
+				// Debug circle for mirror
+				debugParts.push(`<circle cx="${mx}" cy="${my}" r="${baseR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
+			}
 		}
 
 		// Generate tabs for straight line segments using their stored endpoints
-		const cosR = Math.cos(rotation);
-		const sinR = Math.sin(rotation);
-
 		for (const seg of stackedC) {
 			if (seg.type !== 'line' || !seg.x1) continue; // Skip if not a line or no endpoint data
 

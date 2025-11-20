@@ -218,7 +218,7 @@ function computeSegmentLengthsFromPath(d) {
 				}
 				const pathData = `M ${curX},${curY} C ${x1},${y1} ${x2},${y2} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len });
+				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, cx2: x2, cy2: y2 });
 				lastControlX = x2; lastControlY = y2;
 				curX = x; curY = y;
 			}
@@ -244,7 +244,7 @@ function computeSegmentLengthsFromPath(d) {
 				}
 				const pathData = `M ${curX},${curY} C ${x1},${y1} ${x2},${y2} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len });
+				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, cx2: x2, cy2: y2 });
 				lastControlX = x2; lastControlY = y2;
 				curX = x; curY = y;
 			}
@@ -266,7 +266,7 @@ function computeSegmentLengthsFromPath(d) {
 				}
 				const pathData = `M ${curX},${curY} Q ${x1},${y1} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len });
+				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, isQuadratic: true });
 				lastControlX = x1; lastControlY = y1;
 				curX = x; curY = y;
 			}
@@ -288,7 +288,7 @@ function computeSegmentLengthsFromPath(d) {
 				}
 				const pathData = `M ${curX},${curY} Q ${x1},${y1} ${x},${y}`;
 				const len = curveLength(pathData);
-				segs.push({ type: 'curve', length: len });
+				segs.push({ type: 'curve', length: len, x1: curX, y1: curY, x2: x, y2: y, cx1: x1, cy1: y1, isQuadratic: true });
 				lastControlX = x1; lastControlY = y1;
 				curX = x; curY = y;
 			}

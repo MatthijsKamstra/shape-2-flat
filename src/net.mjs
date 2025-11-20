@@ -167,7 +167,12 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 			x1: s.x1,
 			y1: s.y1,
 			x2: s.x2,
-			y2: s.y2
+			y2: s.y2,
+			cx1: s.cx1,
+			cy1: s.cy1,
+			cx2: s.cx2,
+			cy2: s.cy2,
+			isQuadratic: s.isQuadratic
 		}));
 	} else {
 		// Default from rotated polygon edges
@@ -192,7 +197,12 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 		x1: s.x1,
 		y1: s.y1,
 		x2: s.x2,
-		y2: s.y2
+		y2: s.y2,
+		cx1: s.cx1,
+		cy1: s.cy1,
+		cx2: s.cx2,
+		cy2: s.cy2,
+		isQuadratic: s.isQuadratic
 	}));
 
 	// Alignment data for the first (longest) edge on base
