@@ -23,25 +23,28 @@
 
 - **Page size**: A4 (210×297) in chosen unit (default `mm`)
 - **SVG Groups**:
-  - `SHAPE`: Main model geometry (base, mirror, side rectangles)
-  - `GLUE_SIDE`: Glue tabs for side panels (7mm, 45° angled ends, gray fill `#e5e5e5`, no stroke)
-  - `GLUE_SHAPE`: Glue tabs for base/mirror shapes (currently empty, reserved for future use)
-  - `FOLDING_SIDE`: Dashed fold lines for side panels (white `#FFF`, `stroke-dasharray="2,1"`)
-  - `FOLDING_SHAPE`: Fold lines for base/mirror shapes (currently empty, reserved for future use)
-  - `CUT_LINES`: Reserved (currently empty)
-  - `DESIGN`: Overlay layer (reserved for custom designs)
-  - `INFO`: Perimeter text label
-  - `BG`: White page background
+  - `SHAPE`: Main geometry (base, mirror, side rectangles) — base light gray `#e5e5e5`, sides & mirror white
+  - `GLUE_SIDE`: Glue tabs for side strip seams (trapezoids for straight seams, saw-tooth triangles for curved seams)
+  - `GLUE_SHAPE`: Glue tabs along base/mirror perimeter (excluding attachment edge); includes trapezoids (straight) and star tabs (arc/curve)
+  - `FOLDING_SIDE`: Dashed fold lines for side panels (`stroke-dasharray="2,1"`, white stroke)
+  - `FOLDING_SHAPE`: Fold lines for base/mirror tabs (alternate inner vertices for star tabs)
+  - `CUT_LINES`: Reserved placeholder
+  - `DESIGN`: User artwork placeholder
+  - `INFO`: Diagnostics: total perimeter, per-segment length/angle/type
+  - `DEBUG`: Fitted circles/ellipses for arc & curve segments (base red/orange, mirror blue/cyan) + center markers
+  - `BG`: Page background (white rect)
 
 ## Styles
 
-- **SHAPE fill/stroke**:
-  - Base: gray fill `#e5e5e5`, black stroke `stroke-width=0.6`
-  - Mirror & sides: white fill, black stroke `stroke-width=0.6`
-- **Glue tabs**: 7mm with 45° angled ends on all four sides; for shapes with curves (circles/ellipses/Bézier curves), vertical seams use saw-tooth triangular tabs for easier bending
-- **Primitives**: rect/circle/ellipse inputs preserved as native SVG elements (not converted to paths)
+- **Base**: light gray `#e5e5e5`, stroke black `stroke-width=0.6`
+- **Mirror & sides**: white fill, same stroke
+- **Glue tabs (straight)**: bilateral 7 mm trapezoids (white fill, black stroke)
+- **Glue tabs (arc/curve)**: star tab (single closed path) built from fitted center; spikes 12–48 (see heuristic); white fill, black stroke
+- **Vertical seams (curved)**: saw-tooth triangular tabs for flexibility
+- **Fold lines**: white dashed `stroke-dasharray="2,1"`
+- **Primitives**: rect/circle/ellipse preserved (not path-converted)
 
-## Path Command Support
+## Path Command Support & Segment Data
 
 All SVG path commands are fully supported:
 
@@ -49,11 +52,11 @@ All SVG path commands are fully supported:
 - **L/l** - LineTo (absolute/relative)
 - **H/h** - Horizontal LineTo (absolute/relative)
 - **V/v** - Vertical LineTo (absolute/relative)
-- **A/a** - Arc (absolute/relative) - uses `svg-path-properties` for accurate length
-- **C/c** - Cubic Bézier curve (absolute/relative)
-- **Q/q** - Quadratic Bézier curve (absolute/relative)
-- **S/s** - Smooth cubic Bézier (absolute/relative) - with control point reflection
-- **T/t** - Smooth quadratic Bézier (absolute/relative) - with control point reflection
+  -- **A/a** - Arc (absolute/relative) - arcParams stored (rx, ry, xRot, largeArc, sweep) + endpoints; accurate center computed
+  -- **C/c** - Cubic Bézier curve (absolute/relative) - endpoints + (cx1,cy1,cx2,cy2)
+  -- **Q/q** - Quadratic Bézier curve (absolute/relative) - endpoints + (cx1,cy1), flagged quadratic
+  -- **S/s** - Smooth cubic Bézier (absolute/relative) - reflected first control point + explicit second; control points stored
+  -- **T/t** - Smooth quadratic Bézier (absolute/relative) - reflected control point stored with quadratic flag
 - **Z/z** - ClosePath (case-insensitive)
 
 ## Pipeline
@@ -63,4 +66,26 @@ All SVG path commands are fully supported:
 3. **Simplify** (`src/path-flatten.mjs`): Remove colinear points while preserving shape
 4. **Compute** (`src/path-segments.mjs`): Calculate segment lengths for all path commands using `svg-path-properties` (arcs and Bézier curves) or direct calculation (lines)
 5. **Generate** (`src/net.mjs`): Create net layout (base, mirror, side rects) with rotation and alignment, preserving segment types (`line`/`arc`/`curve`)
-6. **Render** (`src/render.mjs`): Output grouped SVG with tabs (saw-tooth for curved segments) and fold lines
+6. **Render** (`src/render.mjs`): Output grouped SVG with trapezoid, saw-tooth, and star tabs; fold lines; INFO diagnostics; DEBUG visual centers
+
+## Glue Tab Types
+
+- **Trapezoid Tab**: Straight edge bilateral tab; full edge length with tapered ends (45°)
+- **Saw-tooth Seam Tabs**: Triangular teeth on vertical seams when adjoining segment `type` is arc or curve; improves bending
+- **Star Tab**: Single perimeter path for arcs/curves (including circle/ellipse primitives) — outward spikes alternate with inward vertices; fold lines placed on every other inward vertex
+
+## Star Tab Spike Heuristic
+
+`spikes = clamp(12, 48, round(perimeter / 8))`
+
+- Perimeter for ellipse via Ramanujan approximation; arcs use segment length proportion; curves use fitted circle circumference
+
+## Fitted Centers
+
+- **Arc Center**: Calculated per SVG spec (radii normalization, rotation, midpoint transform)
+- **Curve Center**: Circumcenter of start, midpoint sample (t=0.5), end; midpoint fallback if collinear
+
+## Endpoint & Control Propagation
+
+- All segments carry endpoints (x1,y1,x2,y2)
+- Curves carry control points; arcs carry arcParams; used for tab geometry & diagnostics

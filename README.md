@@ -1,21 +1,28 @@
 # shape-2-flat
 
-Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded prism. White fill with black stroke. Output is grouped into SHAPE, GLUE, FOLDING_LINES, and DESIGN; tabs live in GLUE and fold lines in FOLDING_LINES.
+Convert an SVG path or primitive into a printable A4 SVG net (unfolded layout) of an extruded prism. Base/mirror use light gray fill (#e5e5e5); sides & tabs are white; stroke width is 0.6 (black). Output groups now include SHAPE, GLUE_SIDE, GLUE_SHAPE, FOLDING_SIDE, FOLDING_SHAPE, DESIGN, INFO, DEBUG, CUT_LINES (placeholder), and BG.
 
 ## What it does
 
-- Reads an SVG path (or rect/polygon/circle/ellipse) and flattens it to a polygon
-- Creates a prism of depth D by:
-  - Base (original polygon), rotated so the longest edge is vertical
-  - Mirrored Base (horizontal mirror) placed to the right
-  - Side rectangles (voor rechthoeken: precies vier), verticaal gestapeld tussen Base en Mirror met:
-    - height = bijbehorende randlengte in volgorde lang, kort, lang, kort
-    - width = extrusion depth (die je via --depth opgeeft)
-- Outputs an A4-sized SVG (210×297mm) with white-filled shapes and black stroke outlines
-- Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE_SIDE"> for side panel tabs, <g id="GLUE_SHAPE"> for base and mirror shape tabs, <g id="FOLDING_SIDE"> for side fold lines, <g id="FOLDING_SHAPE"> for base and mirror fold lines, <g id="DESIGN"> reserved for overlays
-- Glue tabs: 7 mm trapezoid tabs with 45° angled ends (papertoy style), gray fill (#e5e5e5) without stroke. For shapes with curves (circle/ellipse/Bézier curves), vertical seams use saw‑tooth (triangular) tabs for easier bending; top/bottom remain 45°. Side panel tabs render into GLUE_SIDE; base and mirror polygon edges (except where they touch the side stack) get tabs in GLUE_SHAPE. Tabs do not affect SHAPE centering. Fold lines are drawn into FOLDING_SIDE (for sides) and FOLDING_SHAPE (for base/mirror edges).
-- Primitives: circle/ellipse/rect inputs render as their original primitives in SHAPE (not converted to paths). Circle/ellipse are tangent‑aligned to the side stack (base: rightmost point, mirror: leftmost point).
-- Perimeter overlay: a small "Perimeter: N unit" label is added in DESIGN for quick validation (equals the total side‑strip length/circumference).
+- Reads an SVG path or primitive (rect / polygon / polyline / circle / ellipse); primitives are preserved (no forced path conversion) for fidelity.
+- Rotates base so longest straight edge is vertical; mirrors original (not flattened) geometry to create the opposite face.
+- Builds side strip from ordered segments (merging < min-segment) with zero gap between strip and bases.
+- Centers layout ignoring glue tabs within an A4 page (210×297 in chosen unit).
+- Exports groups:
+  - SHAPE: base, mirror, side panels
+  - GLUE_SIDE / FOLDING_SIDE: side strip tabs & fold lines
+  - GLUE_SHAPE / FOLDING_SHAPE: base & mirror edge tabs (excluding attachment edge)
+  - INFO: perimeter + edge diagnostics (type, length, angle)
+  - DEBUG: fitted circles/ellipses for arc & curve segments
+  - DESIGN: user overlays (placeholder)
+  - CUT_LINES: future die line output (placeholder)
+  - BG: full-page white rectangle
+- Glue tabs system:
+  - Straight edges: bilateral 7 mm trapezoid tabs (two full-length trapezoids per edge)
+  - Arc segments & circle/ellipse primitives: single star perimeter tab (12–48 spikes) using true arc/ellipse center
+  - Bézier curves (C/Q/S/T): star tabs via circle fit (circumcenter of start / midpoint sample / end)
+  - Curved vertical seams use saw-tooth triangles; straight seams use 45° miters.
+- Perimeter & spike count heuristic: spikes ≈ perimeter / 8, clamped to [12,48].
 
 ## Quick start
 
@@ -57,7 +64,8 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 - Self-intersecting paths are not supported
 - For rectangles: side rectangles are four segments ordered long, short, long, short; connected without gaps
 - Arc handling: arc segments contribute exact arc length to side‑rect heights. For pure circle/ellipse inputs, the side stack uses one rectangle whose height equals the circumference.
-- Glue tabs: 7 mm angled tabs (gray fill, no stroke) are emitted in GLUE; for circle/ellipse the vertical seams use saw‑tooth tabs. SHAPE layout/centering excludes tabs. Fold lines appear in FOLDING_LINES.
+- Segment data includes endpoints (x1,y1,x2,y2), arc parameters (rx,ry,xRot,largeArc,sweep), and curve control points (cx1,cy1[,cx2,cy2], quadratic flag) for accurate lengths & tab geometry.
+- Glue tabs: white fill, black stroke (same stroke width) in GLUE*\* groups; fold lines are dashed white (2,1) inside FOLDING*\* groups; tabs excluded from centering.
 - Units are not converted; you control them via the `--unit` flag and the `--scale` option. Default unit is mm.
   - A4 canvas is fixed to 210×297 in the chosen `--unit` (use `--unit mm` for print)
 
@@ -65,6 +73,25 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 
 - See `TERMINOLOGY.md` for terminology
 - See `.github/copilot-instructions.md` for a copilot prompt reference
+
+## Curve & Arc Details
+
+- Arc centers follow SVG spec (radii normalization, rotation, center transform) before star tab generation.
+- Curve center circle fit: circumcenter of start, sampled midpoint (t=0.5), end; near-collinear fallback uses midpoint.
+- Ellipse perimeter uses Ramanujan approximation; circle uses 2πr.
+- Star tab path is a single closed polygon; fold lines only at every alternate inner vertex.
+- DEBUG group renders fitted shapes (base: red/orange, mirror: blue/cyan) for visual verification.
+
+## Performance Notes
+
+- Star tab generation scales with spike count; very large perimeters may benefit from future `--spike-density` option.
+- Flattening avoided for arc/curve tabs to prevent explosion of tiny trapezoids.
+
+## Future Extensions
+
+- CUT_LINES: die/perforation exports
+- DESIGN: artwork overlay integration
+- Potential options: custom spike density, alternate tab styles
 
 ## License
 
