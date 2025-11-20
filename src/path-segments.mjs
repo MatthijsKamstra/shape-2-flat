@@ -187,13 +187,13 @@ function computeSegmentLengthsFromPath(d) {
 				const n5 = readNumber(src, pos); if (n5.value == null) break; pos = skipSeparators(src, n5.next);
 				const n6 = readNumber(src, pos); if (n6.value == null) break; pos = skipSeparators(src, n6.next);
 				const n7 = readNumber(src, pos); if (n7.value == null) break; pos = n7.next;
-				const rx = n1.value, ry = n2.value, xRot = n3.value;
-				const largeArc = n4.value, sweep = n5.value;
-				let x = n6.value, y = n7.value;
-				if (isRel) { x += curX; y += curY; }
-				const len = arcLength(curX, curY, rx, ry, xRot, largeArc, sweep, x, y);
-				segs.push({ type: 'arc', length: len });
-				lastControlX = null; lastControlY = null; // Reset control point
+			const rx = n1.value, ry = n2.value, xRot = n3.value;
+			const largeArc = n4.value, sweep = n5.value;
+			let x = n6.value, y = n7.value;
+			if (isRel) { x += curX; y += curY; }
+			const len = arcLength(curX, curY, rx, ry, xRot, largeArc, sweep, x, y);
+			segs.push({ type: 'arc', length: len, arcParams: { x1: curX, y1: curY, x2: x, y2: y, rx, ry, xRot, largeArc, sweep } });
+			lastControlX = null; lastControlY = null; // Reset control point
 				curX = x; curY = y;
 			}
 			continue;

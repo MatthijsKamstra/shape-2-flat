@@ -50,7 +50,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// Now stack rectangles at (sx, sy)
 	let cy = sy;
 	const stacked = net.sideRects.map(seg => {
-		const r = { x: sx, y: cy, w: seg.w, h: seg.h, type: seg.type || 'line' };
+		const r = { x: sx, y: cy, w: seg.w, h: seg.h, type: seg.type || 'line', arcParams: seg.arcParams };
 		cy += seg.h;
 		return r;
 	});
@@ -88,7 +88,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const baseC = translate(base, dx, dy);
 	const mirrorC = translate(baseMirror, dx, dy);
-	const stackedC = stacked.map(r => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h, type: r.type }));
+	const stackedC = stacked.map(r => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h, type: r.type, arcParams: r.arcParams }));
 	// no tabs
 
 	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
@@ -251,25 +251,25 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			if (segType === 'arc' || segType === 'curve') {
 				// Calculate number of spikes based on arc length
 				const numSpikes = Math.max(4, Math.min(16, Math.round(len / 8)));
-				
+
 				// Unit tangent and normal (outward)
 				const tx = dx / len;
 				const ty = dy / len;
 				const nx = -ty;
 				const ny = tx;
-				
+
 				// Create star pattern along the edge - alternating inner and outer points
 				const pathParts = [];
 				const foldParts = [];
-				
+
 				for (let j = 0; j < numSpikes * 2; j++) {
 					const t = j / (numSpikes * 2);
 					const isOuter = j % 2 === 1;
-					
+
 					// Point along the edge (linear interpolation)
 					const edgeX = x1 + dx * t;
 					const edgeY = y1 + dy * t;
-					
+
 					let x, y;
 					if (isOuter) {
 						// Outer point (spike tip) - extend perpendicular by tabW
@@ -280,13 +280,13 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 						x = edgeX;
 						y = edgeY;
 					}
-					
+
 					if (j === 0) {
 						pathParts.push(`M ${x},${y}`);
 					} else {
 						pathParts.push(`L ${x},${y}`);
 					}
-					
+
 					// Add fold lines between inner (perimeter) points only
 					if (!isOuter && j > 0) {
 						const prevT = (j - 2) / (numSpikes * 2);
@@ -295,11 +295,11 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 						foldParts.push(`<path d="M ${prevX},${prevY} L ${x},${y}" ${foldStyle}/>`);
 					}
 				}
-				
+
 				pathParts.push('Z');
 				glueShapeParts.push(`<path d="${pathParts.join(' ')}" ${tabStyle}/>`);
 				foldShapeParts.push(...foldParts);
-				
+
 			} else {
 				// Straight edge: use trapezoid tabs
 				// Unit tangent and normal (outward)
@@ -441,6 +441,22 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const info = infoLines.join('\n');
 
+	// DEBUG: Create fitted circles for arc segments
+	const debugParts = [];
+	for (const seg of stackedC) {
+		if ((seg.type === 'arc' || seg.type === 'curve') && seg.arcParams) {
+			const { x1, y1, x2, y2, rx, ry } = seg.arcParams;
+			// Calculate center point (midpoint of arc endpoints for now)
+			const cx = (x1 + x2) / 2;
+			const cy = (y1 + y2) / 2;
+			// Use average radius
+			const r = (rx + ry) / 2;
+			debugParts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+			// Add center mark
+			debugParts.push(`<circle cx="${cx}" cy="${cy}" r="1" fill="red"/>`);
+		}
+	}
+
 	let parts = [];
 	parts.push(`<g id="GLUE_SIDE">${glueSideParts.join("\n")}</g>`);
 	parts.push(`<g id="GLUE_SHAPE">${glueShapeParts.join("\n")}</g>`);
@@ -449,6 +465,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	parts.push(`<g id="FOLDING_SHAPE">${foldShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="CUT_LINES"></g>`);
 	parts.push(`<g id="DESIGN"></g>`);
+	parts.push(`<g id="DEBUG">${debugParts.join("\n")}</g>`);
 	parts.push(`<g id="INFO">${info}</g>`);
 
 	// no glue tabs

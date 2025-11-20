@@ -160,7 +160,7 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 			if (edgeLengths[i].type === 'line' && diff < bestDiff) { bestDiff = diff; startIdx = i; }
 		}
 		const reordered = edgeLengths.slice(startIdx).concat(edgeLengths.slice(0, startIdx));
-		segments = reordered.map(s => ({ h: s.length, type: s.type || 'line' }));
+		segments = reordered.map(s => ({ h: s.length, type: s.type || 'line', arcParams: s.arcParams }));
 	} else {
 		// Default from rotated polygon edges
 		segments = edgesOrdered.map(e => ({ h: e.h, type: 'line' }));
@@ -176,7 +176,7 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 			mergedSegs.push({ ...s });
 		}
 	}
-	const sideRects = mergedSegs.map(s => ({ w: depth, h: s.h, type: s.type }));
+	const sideRects = mergedSegs.map(s => ({ w: depth, h: s.h, type: s.type, arcParams: s.arcParams }));
 
 	// Alignment data for the first (longest) edge on base
 	const firstEdge = edgesOrdered[0];
