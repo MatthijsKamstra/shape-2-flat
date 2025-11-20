@@ -20,6 +20,26 @@ function isCommand(ch) {
 	return /[a-zA-Z]/.test(ch);
 }
 
+/**
+ * Read a number from a string starting at a given position.
+ *
+ * Uses numberMatcher() to obtain a RegExp, sets its lastIndex to the provided
+ * start position, and attempts to match a numeric token at that location.
+ *
+ * On success the matched substring is converted to a Number with parseFloat and
+ * the returned `next` is the regex's lastIndex (the position immediately after
+ * the match). If no numeric match is found the function returns `value: null`
+ * and `next` equal to the original `pos`.
+ *
+ * Note: this function mutates the RegExp's lastIndex property when the matcher
+ * produced by numberMatcher() has the `g` or `y` flags.
+ *
+ * @param {string} src - The source string to read from.
+ * @param {number} pos - The index in src to start matching from.
+ * @returns {{ value: number | null, next: number }} An object containing the
+ *          parsed numeric value (or null if no match) and the next index after
+ *          the match (or the original position if none).
+ */
 function readNumber(src, pos) {
 	const re = numberMatcher();
 	re.lastIndex = pos;
@@ -28,6 +48,23 @@ function readNumber(src, pos) {
 	return { value: parseFloat(m[0]), next: re.lastIndex };
 }
 
+/**
+ * Advance the index past separator characters in a string.
+ *
+ * Scans forward from the provided starting index and skips any of the following
+ * ASCII separators: comma (','), space (' '), newline ('\n'), tab ('\t'),
+ * and carriage return ('\r'). Returns the index of the first non-separator
+ * character or src.length if the end of the string is reached.
+ *
+ * @param {string} src - The string to scan.
+ * @param {number} pos - The zero-based starting index within src.
+ * @returns {number} The index of the first character after skipped separators.
+ *
+ * @example
+ * // returns 3
+ * // skips the comma and space after the 'a'
+ * skipSeparators("a, b", 1);
+ */
 function skipSeparators(src, pos) {
 	while (pos < src.length) {
 		const ch = src[pos];
