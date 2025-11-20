@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297">
+<rect x="0" y="0" width="100%" height="100%" fill="white" id="BG"/>
+<g id="GLUE_SIDE"><path d="M 90,-1.5 L 83,5.5 L 83,91.5 L 90,98.5 Z" fill="#e5e5e5"/>
+<path d="M 120,-1.5 L 127,5.5 L 127,91.5 L 120,98.5 Z" fill="#e5e5e5"/>
+<path d="M 90,-1.5 L 97,-8.5 L 113,-8.5 L 120,-1.5 Z" fill="#e5e5e5"/>
+<path d="M 90,98.5 L 97,105.5 L 113,105.5 L 120,98.5 Z" fill="#e5e5e5"/>
+<path d="M 90,98.5 L 83,105.5 L 83,141.5 L 90,148.5 Z" fill="#e5e5e5"/>
+<path d="M 120,98.5 L 127,105.5 L 127,141.5 L 120,148.5 Z" fill="#e5e5e5"/>
+<path d="M 90,98.5 L 97,91.5 L 113,91.5 L 120,98.5 Z" fill="#e5e5e5"/>
+<path d="M 90,148.5 L 97,155.5 L 113,155.5 L 120,148.5 Z" fill="#e5e5e5"/>
+<path d="M 90,148.5 L 83,155.5 L 83,241.5 L 90,248.5 Z" fill="#e5e5e5"/>
+<path d="M 120,148.5 L 127,155.5 L 127,241.5 L 120,248.5 Z" fill="#e5e5e5"/>
+<path d="M 90,148.5 L 97,141.5 L 113,141.5 L 120,148.5 Z" fill="#e5e5e5"/>
+<path d="M 90,248.5 L 97,255.5 L 113,255.5 L 120,248.5 Z" fill="#e5e5e5"/>
+<path d="M 90,248.5 L 83,255.5 L 83,291.5 L 90,298.5 Z" fill="#e5e5e5"/>
+<path d="M 120,248.5 L 127,255.5 L 127,291.5 L 120,298.5 Z" fill="#e5e5e5"/>
+<path d="M 90,248.5 L 97,241.5 L 113,241.5 L 120,248.5 Z" fill="#e5e5e5"/>
+<path d="M 90,298.5 L 97,305.5 L 113,305.5 L 120,298.5 Z" fill="#e5e5e5"/></g>
+<g id="GLUE_SHAPE"></g>
+<g id="SHAPE"><path d="M 0,0 L 100,0 L 100,50 L 0,50 Z" transform="translate(80,-11.5) translate(-65,35) rotate(90 50 25) scale(1 1)" fill="#e5e5e5" stroke="#000" stroke-width="0.6"/>
+<path d="M 0,0 L 100,0 L 100,50 L 0,50 Z" transform="translate(80,-11.5) translate(15,35) translate(50,25) scale(-1 1) translate(-50,-25) rotate(90 50 25) scale(1 1)" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="90" y="-1.5" width="30" height="100" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="90" y="98.5" width="30" height="50" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="90" y="148.5" width="30" height="100" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="90" y="248.5" width="30" height="50" fill="white" stroke="#000" stroke-width="0.6"/></g>
+<g id="FOLDING_SIDE"><path d="M 90,-1.5 L 90,98.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 120,-1.5 L 120,98.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,-1.5 L 120,-1.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,98.5 L 120,98.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,98.5 L 90,148.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 120,98.5 L 120,148.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,98.5 L 120,98.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,148.5 L 120,148.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,148.5 L 90,248.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 120,148.5 L 120,248.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,148.5 L 120,148.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,248.5 L 120,248.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,248.5 L 90,298.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 120,248.5 L 120,298.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,248.5 L 120,248.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 90,298.5 L 120,298.5" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/></g>
+<g id="FOLDING_SHAPE"></g>
+<g id="CUT_LINES"></g>
+<g id="DESIGN"></g>
+<g id="INFO"><text x="5" y="10" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Perimeter (strip length): 300.00 mm</text>
+<text x="5" y="16" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Base footprint: 50.00 × 100.00 mm</text>
+<text x="5" y="22" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Depth: 30.00 mm (panels=4)</text>
+<text x="5" y="28" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Scale: 1×, Margin: 10mm</text>
+<text x="5" y="34" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Input: path edges=4</text>
+<text x="5" y="40" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 0: type=line, height=100.00mm, width=30.00mm</text>
+<text x="5" y="46" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 1: type=line, height=50.00mm, width=30.00mm</text>
+<text x="5" y="52" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 2: type=line, height=100.00mm, width=30.00mm</text>
+<text x="5" y="58" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 3: type=line, height=50.00mm, width=30.00mm</text>
+<text x="5" y="64" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 0: type=line, length=100.00mm, angle=0.0°</text>
+<text x="5" y="70" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 1: type=line, length=50.00mm, angle=90.0°</text>
+<text x="5" y="76" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 2: type=line, length=100.00mm, angle=180.0°</text>
+<text x="5" y="82" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 3: type=line, length=50.00mm, angle=-90.0°</text></g>
+</svg>

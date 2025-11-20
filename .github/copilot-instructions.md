@@ -3,7 +3,7 @@
 ## Purpose & Output
 
 - Node CLI (`bin/shape-2-flat.js`) turns SVG paths or primitives into A4 printable prism nets; exports `generateNet` for browser use via `window.Shape2Flat`.
-- Input comes from `--input` SVG content or `--path` data; outputs SVG with groups `GLUE`, `SHAPE`, `FOLDING_LINES`, `CUT_LINES`, `DESIGN`, `INFO`, `BG` plus meta `{faces, perimeter, area}`.
+- Input comes from `--input` SVG content or `--path` data; outputs SVG with groups `GLUE_SIDE`, `GLUE_SHAPE`, `SHAPE`, `FOLDING_SIDE`, `FOLDING_SHAPE`, `CUT_LINES`, `DESIGN`, `INFO`, `BG` plus meta `{faces, perimeter, area}`.
 - Default depth is 50, units follow `--unit` (mm by default) and propagate to `svg width/height` and rendered geometry.
 
 ## Core Flow
@@ -23,9 +23,9 @@
 ## Rendering & Styling
 
 - `renderNetSvg` (`src/render.mjs`) repositions base/strip/mirror, recenters within `{width:210,height:297}` page unless overridden, and emits gray base fill (`#e5e5e5`), white mirror/sides, black `stroke-width=0.6`.
-- Glue tabs are 7 mm; vertical seams use saw-tooth triangles when the segment `type` is `arc` or `curve`, otherwise 45° miters, and fold lines render in `FOLDING_LINES` as white dashed `stroke-dasharray="2,1"`.
+- Glue tabs are 7 mm; vertical seams use saw-tooth triangles when the segment `type` is `arc` or `curve`, otherwise 45° miters, and fold lines render in `FOLDING_SIDE` as white dashed `stroke-dasharray="2,1"`. Side tabs go to `GLUE_SIDE`/`FOLDING_SIDE`; shape tabs (base/mirror) go to `GLUE_SHAPE`/`FOLDING_SHAPE`.
 - `INFO` group prints total side-strip length plus per-segment diagnostics (type, length, angle) when `edgeLengths` were available; keep messages concise to avoid layout overlap.
-- `BG` is a full-page white rect; `CUT_LINES` and `DESIGN` are placeholders—leave them empty unless adding new features.
+- `BG` is a full-page white rect; `CUT_LINES`, `DESIGN`, `GLUE_SHAPE`, and `FOLDING_SHAPE` are placeholders—leave them empty unless adding new features.
 
 ## CLI & Workflows
 

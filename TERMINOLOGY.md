@@ -24,8 +24,10 @@
 - **Page size**: A4 (210×297) in chosen unit (default `mm`)
 - **SVG Groups**:
   - `SHAPE`: Main model geometry (base, mirror, side rectangles)
-  - `GLUE`: Glue tabs (7mm, 45° angled ends, gray fill `#e5e5e5`, no stroke)
-  - `FOLDING_LINES`: Dashed fold lines (white `#FFF`, `stroke-dasharray="2,1"`)
+  - `GLUE_SIDE`: Glue tabs for side panels (7mm, 45° angled ends, gray fill `#e5e5e5`, no stroke)
+  - `GLUE_SHAPE`: Glue tabs for base/mirror shapes (currently empty, reserved for future use)
+  - `FOLDING_SIDE`: Dashed fold lines for side panels (white `#FFF`, `stroke-dasharray="2,1"`)
+  - `FOLDING_SHAPE`: Fold lines for base/mirror shapes (currently empty, reserved for future use)
   - `CUT_LINES`: Reserved (currently empty)
   - `DESIGN`: Overlay layer (reserved for custom designs)
   - `INFO`: Perimeter text label

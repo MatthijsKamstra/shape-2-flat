@@ -12,8 +12,8 @@ Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded
     - height = bijbehorende randlengte in volgorde lang, kort, lang, kort
     - width = extrusion depth (die je via --depth opgeeft)
 - Outputs an A4-sized SVG (210×297mm) with white-filled shapes and black stroke outlines
-- Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE"> for glue tabs, <g id="FOLDING_LINES"> for dashed fold lines, <g id="DESIGN"> reserved for overlays
-- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke. For shapes with curves (circle/ellipse/Bézier curves), vertical seams use saw‑tooth (triangular) tabs for easier bending; top/bottom remain 45°. Tabs render into GLUE and do not affect SHAPE centering. Fold lines are drawn into FOLDING_LINES.
+- Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE_SIDE"> for side panel tabs, <g id="GLUE_SHAPE"> for shape tabs (base/mirror), <g id="FOLDING_SIDE"> for side fold lines, <g id="FOLDING_SHAPE"> for shape fold lines, <g id="DESIGN"> reserved for overlays
+- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke. For shapes with curves (circle/ellipse/Bézier curves), vertical seams use saw‑tooth (triangular) tabs for easier bending; top/bottom remain 45°. Tabs render into GLUE_SIDE and GLUE_SHAPE and do not affect SHAPE centering. Fold lines are drawn into FOLDING_SIDE and FOLDING_SHAPE.
 - Primitives: circle/ellipse/rect inputs render as their original primitives in SHAPE (not converted to paths). Circle/ellipse are tangent‑aligned to the side stack (base: rightmost point, mirror: leftmost point).
 - Perimeter overlay: a small "Perimeter: N unit" label is added in DESIGN for quick validation (equals the total side‑strip length/circumference).
 

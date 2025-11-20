@@ -151,8 +151,10 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// Glue tabs: 7 mm with 45° angled ends on all four sides; for circle/ellipse/curves use saw-tooth on left/right seams
 	const tabW = 7;
 	const foldStyle = 'fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"';
-	const glueParts = [];
-	const foldParts = [];
+	const glueSideParts = [];
+	const glueShapeParts = [];
+	const foldSideParts = [];
+	const foldShapeParts = [];
 	const isCurvyShape = originalShape && ((originalShape.kind === 'circle' || originalShape.kind === 'ellipse') || originalShape.hasArcs);
 	const toothPitch = tabW; // spacing along seam for saw-tooth
 	for (const r of stackedC) {
@@ -169,15 +171,15 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 					const y1 = Math.min(y0 + toothPitch, yBot);
 					const ym = (y0 + y1) / 2;
 					const d = `M ${xFold},${y0} L ${xOut},${ym} L ${xFold},${y1} Z`;
-					glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+					glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
 					y0 = y1;
 				}
 			} else {
 				const vDelta = Math.min(tabW, r.h / 2);
 				const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
-				glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+				glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
 			}
-			foldParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
+			foldSideParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
 		}
 		// Right tab (vertical seam with mirror)
 		{
@@ -191,15 +193,15 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 					const y1 = Math.min(y0 + toothPitch, yBot);
 					const ym = (y0 + y1) / 2;
 					const d = `M ${xFold},${y0} L ${xOut},${ym} L ${xFold},${y1} Z`;
-					glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+					glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
 					y0 = y1;
 				}
 			} else {
 				const vDelta = Math.min(tabW, r.h / 2);
 				const d = `M ${xFold},${yTop} L ${xOut},${yTop + vDelta} L ${xOut},${yBot - vDelta} L ${xFold},${yBot} Z`;
-				glueParts.push(`<path d="${d}" ${tabStyle}/>`);
+				glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
 			}
-			foldParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
+			foldSideParts.push(`<path d="M ${xFold},${yTop} L ${xFold},${yBot}" ${foldStyle}/>`);
 		}
 		// Top tab (horizontal)
 		{
@@ -209,8 +211,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const xRight = r.x + r.w;
 			const hDelta = Math.min(tabW, r.w / 2);
 			const d = `M ${xLeft},${yFold} L ${xLeft + hDelta},${yOut} L ${xRight - hDelta},${yOut} L ${xRight},${yFold} Z`;
-			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
-			foldParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
+			glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
+			foldSideParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
 		}
 		// Bottom tab (horizontal)
 		{
@@ -220,8 +222,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const xRight = r.x + r.w;
 			const hDelta = Math.min(tabW, r.w / 2);
 			const d = `M ${xLeft},${yFold} L ${xLeft + hDelta},${yOut} L ${xRight - hDelta},${yOut} L ${xRight},${yFold} Z`;
-			glueParts.push(`<path d="${d}" ${tabStyle}/>`);
-			foldParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
+			glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
+			foldSideParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
 		}
 	}
 
@@ -264,9 +266,11 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const info = infoLines.join('\n');
 
 	let parts = [];
-	parts.push(`<g id="GLUE">${glueParts.join("\n")}</g>`);
+	parts.push(`<g id="GLUE_SIDE">${glueSideParts.join("\n")}</g>`);
+	parts.push(`<g id="GLUE_SHAPE">${glueShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="SHAPE">${shapeParts.join("\n")}</g>`);
-	parts.push(`<g id="FOLDING_LINES">${foldParts.join("\n")}</g>`);
+	parts.push(`<g id="FOLDING_SIDE">${foldSideParts.join("\n")}</g>`);
+	parts.push(`<g id="FOLDING_SHAPE">${foldShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="CUT_LINES"></g>`);
 	parts.push(`<g id="DESIGN"></g>`);
 	parts.push(`<g id="INFO">${info}</g>`);
