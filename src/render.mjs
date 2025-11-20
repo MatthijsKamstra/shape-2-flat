@@ -397,10 +397,16 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		}
 	} else {
 		// Polygon edge tabs for non-circular shapes
-		// Extract segment types from stackedC
-		const segmentTypes = stackedC.map(r => r.type || 'line');
-		addShapeEdgeTabs(baseC, true, segmentTypes);
-		addShapeEdgeTabs(mirrorC, false, segmentTypes);
+		// Check if shape has arc/curve segments
+		const hasArcs = stackedC.some(r => r.type === 'arc' || r.type === 'curve');
+		
+		if (!hasArcs) {
+			// Only generate tabs for shapes without arcs
+			const segmentTypes = stackedC.map(r => r.type || 'line');
+			addShapeEdgeTabs(baseC, true, segmentTypes);
+			addShapeEdgeTabs(mirrorC, false, segmentTypes);
+		}
+		// Skip tab generation for shapes with arcs (tabs are wrong for now)
 	}
 
 	// Info text: circumference/perimeter equals total side strip length
@@ -441,19 +447,137 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const info = infoLines.join('\n');
 
-	// DEBUG: Create fitted circles for arc segments
+	// Helper function to calculate arc center from SVG arc parameters
+	function calculateArcCenter(x1, y1, x2, y2, rx, ry, xRot, largeArc, sweep) {
+		// Convert rotation angle to radians
+		const phi = (xRot * Math.PI) / 180;
+		const cosPhi = Math.cos(phi);
+		const sinPhi = Math.sin(phi);
+
+		// Compute half-distance between endpoints
+		const dx = (x1 - x2) / 2;
+		const dy = (y1 - y2) / 2;
+
+		// Rotate to align with ellipse axes
+		const x1Prime = cosPhi * dx + sinPhi * dy;
+		const y1Prime = -sinPhi * dx + cosPhi * dy;
+
+		// Correct radii if needed
+		const lambda = (x1Prime * x1Prime) / (rx * rx) + (y1Prime * y1Prime) / (ry * ry);
+		if (lambda > 1) {
+			rx *= Math.sqrt(lambda);
+			ry *= Math.sqrt(lambda);
+		}
+
+		// Calculate center in rotated coordinates
+		const sign = largeArc !== sweep ? 1 : -1;
+		const sq = Math.max(0, (rx * rx * ry * ry - rx * rx * y1Prime * y1Prime - ry * ry * x1Prime * x1Prime) / 
+			(rx * rx * y1Prime * y1Prime + ry * ry * x1Prime * x1Prime));
+		const coef = sign * Math.sqrt(sq);
+		const cxPrime = coef * (rx * y1Prime) / ry;
+		const cyPrime = -coef * (ry * x1Prime) / rx;
+
+		// Rotate back and translate
+		const cx = cosPhi * cxPrime - sinPhi * cyPrime + (x1 + x2) / 2;
+		const cy = sinPhi * cxPrime + cosPhi * cyPrime + (y1 + y2) / 2;
+
+		return { cx, cy };
+	}
+
+	// DEBUG: Create fitted circles for arc segments on base and mirror shapes
 	const debugParts = [];
-	for (const seg of stackedC) {
-		if ((seg.type === 'arc' || seg.type === 'curve') && seg.arcParams) {
-			const { x1, y1, x2, y2, rx, ry } = seg.arcParams;
-			// Calculate center point (midpoint of arc endpoints for now)
-			const cx = (x1 + x2) / 2;
-			const cy = (y1 + y2) / 2;
-			// Use average radius
-			const r = (rx + ry) / 2;
-			debugParts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
-			// Add center mark
-			debugParts.push(`<circle cx="${cx}" cy="${cy}" r="1" fill="red"/>`);
+	
+	// Apply transform to a point
+	function transformPoint(x, y, sx, sy, rotation, cx, cy, translateX, translateY) {
+		// Scale
+		let tx = x * sx;
+		let ty = y * sy;
+		
+		// Rotate around center
+		const cosR = Math.cos(rotation);
+		const sinR = Math.sin(rotation);
+		const dx = tx - cx;
+		const dy = ty - cy;
+		tx = cx + dx * cosR - dy * sinR;
+		ty = cy + dx * sinR + dy * cosR;
+		
+		// Translate
+		tx += translateX;
+		ty += translateY;
+		
+		return { x: tx, y: ty };
+	}
+	
+	if (originalShape && originalShape.d && net.rotation) {
+		// For path-based shapes, apply the same transforms as the rendered shapes
+		const deg = (net.rotation.angle * 180) / Math.PI;
+		const rotation = net.rotation.angle;
+		const c0x = net.rotation.centroidOriginal[0] * scale;
+		const c0y = net.rotation.centroidOriginal[1] * scale;
+		const cBx = net.rotation.centroidBase[0];
+		const cBy = net.rotation.centroidBase[1];
+		const stackLeftX0 = sx;
+		const stackRightX0 = sx + (stacked[0]?.w || 0);
+		const deltaBaseX = stackLeftX0 - baseBox.maxX;
+		const deltaMirrorX = stackRightX0 - mirrorBox.minX;
+		
+		for (const seg of stackedC) {
+			if ((seg.type === 'arc' || seg.type === 'curve') && seg.arcParams) {
+				const { x1, y1, x2, y2, rx, ry, xRot, largeArc, sweep } = seg.arcParams;
+				
+				// Calculate actual arc center in original coordinates
+				const { cx: cx0, cy: cy0 } = calculateArcCenter(x1, y1, x2, y2, rx, ry, xRot || 0, largeArc || 0, sweep || 0);
+				
+				// Transform for BASE shape
+				const baseTransX = dx + baseOffsetX + deltaBaseX;
+				const baseTransY = dy + baseOffsetY;
+				const basePt = transformPoint(cx0, cy0, scale, scale, rotation, c0x, c0y, baseTransX, baseTransY);
+				const baseR = (rx + ry) / 2 * scale;
+				
+				debugParts.push(`<circle cx="${basePt.x}" cy="${basePt.y}" r="${baseR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${basePt.x}" cy="${basePt.y}" r="1" fill="red"/>`);
+				
+				// Transform for MIRROR shape
+				// SVG transforms apply right-to-left:
+				// scale(1 1) → rotate(-270 c0x c0y) → translate(-cBx,-cBy) → scale(-1 1) → translate(cBx,cBy) → translate(mirror) → translate(dx,dy)
+				
+				let mx = cx0;
+				let my = cy0;
+				
+				// 1. scale(1 1) - apply scale first
+				mx *= scale;
+				my *= scale;
+				
+				// 2. rotate around c0
+				const cosR = Math.cos(rotation);
+				const sinR = Math.sin(rotation);
+				let dmx = mx - c0x;
+				let dmy = my - c0y;
+				mx = c0x + dmx * cosR - dmy * sinR;
+				my = c0y + dmx * sinR + dmy * cosR;
+				
+				// 3. translate(-cBx, -cBy)
+				mx -= cBx;
+				my -= cBy;
+				
+				// 4. scale(-1, 1) - horizontal flip
+				mx = -mx;
+				
+				// 5. translate(cBx, cBy)
+				mx += cBx;
+				my += cBy;
+				
+				// 6. translate(mirror offset)
+				mx += mirrorOffsetX + deltaMirrorX;
+				my += mirrorOffsetY;
+				
+				// 7. translate(dx, dy) - final centering
+				mx += dx;
+				my += dy;
+				
+				debugParts.push(`<circle cx="${mx}" cy="${my}" r="${baseR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
+			}
 		}
 	}
 
