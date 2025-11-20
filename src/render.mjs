@@ -399,7 +399,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		// Polygon edge tabs for non-circular shapes
 		// Check if shape has arc/curve segments
 		const hasArcs = stackedC.some(r => r.type === 'arc' || r.type === 'curve');
-		
+
 		if (!hasArcs) {
 			// Only generate tabs for shapes without arcs
 			const segmentTypes = stackedC.map(r => r.type || 'line');
@@ -471,7 +471,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 		// Calculate center in rotated coordinates
 		const sign = largeArc !== sweep ? 1 : -1;
-		const sq = Math.max(0, (rx * rx * ry * ry - rx * rx * y1Prime * y1Prime - ry * ry * x1Prime * x1Prime) / 
+		const sq = Math.max(0, (rx * rx * ry * ry - rx * rx * y1Prime * y1Prime - ry * ry * x1Prime * x1Prime) /
 			(rx * rx * y1Prime * y1Prime + ry * ry * x1Prime * x1Prime));
 		const coef = sign * Math.sqrt(sq);
 		const cxPrime = coef * (rx * y1Prime) / ry;
@@ -484,30 +484,51 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		return { cx, cy };
 	}
 
-	// DEBUG: Create fitted circles for arc segments on base and mirror shapes
+	// Generate star-pattern glue tabs for arc segments on base and mirror shapes
 	const debugParts = [];
-	
-	// Apply transform to a point
-	function transformPoint(x, y, sx, sy, rotation, cx, cy, translateX, translateY) {
-		// Scale
-		let tx = x * sx;
-		let ty = y * sy;
-		
-		// Rotate around center
-		const cosR = Math.cos(rotation);
-		const sinR = Math.sin(rotation);
-		const dx = tx - cx;
-		const dy = ty - cy;
-		tx = cx + dx * cosR - dy * sinR;
-		ty = cy + dx * sinR + dy * cosR;
-		
-		// Translate
-		tx += translateX;
-		ty += translateY;
-		
-		return { x: tx, y: ty };
+
+	// Helper function to generate star pattern tabs at a specific position
+	function addArcStarTabs(cx, cy, rx, ry, numSpikes) {
+		// Create a single star-shaped path alternating between inner and outer radii
+		// Inner radius = rx/ry (on perimeter), outer radius = rx/ry + tabW (extended)
+		const pathParts = [];
+		const foldParts = [];
+
+		for (let i = 0; i < numSpikes * 2; i++) {
+			const angle = (i * Math.PI) / numSpikes;
+			const isOuter = i % 2 === 1;
+
+			let x, y;
+			if (isOuter) {
+				// Outer point (spike tip)
+				x = cx + (rx + tabW) * Math.cos(angle);
+				y = cy + (ry + tabW) * Math.sin(angle);
+			} else {
+				// Inner point (on perimeter)
+				x = cx + rx * Math.cos(angle);
+				y = cy + ry * Math.sin(angle);
+			}
+
+			if (i === 0) {
+				pathParts.push(`M ${x},${y}`);
+			} else {
+				pathParts.push(`L ${x},${y}`);
+			}
+
+			// Add fold lines along the inner (perimeter) edges only
+			if (!isOuter && i > 0) {
+				const prevAngle = ((i - 2) * Math.PI) / numSpikes;
+				const x1 = cx + rx * Math.cos(prevAngle);
+				const y1 = cy + ry * Math.sin(prevAngle);
+				foldParts.push(`<path d="M ${x1},${y1} L ${x},${y}" ${foldStyle}/>`);
+			}
+		}
+
+		pathParts.push('Z');
+		glueShapeParts.push(`<path d="${pathParts.join(' ')}" ${tabStyle}/>`);
+		foldShapeParts.push(...foldParts);
 	}
-	
+
 	if (originalShape && originalShape.d && net.rotation) {
 		// For path-based shapes, apply the same transforms as the rendered shapes
 		const deg = (net.rotation.angle * 180) / Math.PI;
@@ -520,68 +541,84 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		const stackRightX0 = sx + (stacked[0]?.w || 0);
 		const deltaBaseX = stackLeftX0 - baseBox.maxX;
 		const deltaMirrorX = stackRightX0 - mirrorBox.minX;
-		
+
 		for (const seg of stackedC) {
 			if ((seg.type === 'arc' || seg.type === 'curve') && seg.arcParams) {
 				const { x1, y1, x2, y2, rx, ry, xRot, largeArc, sweep } = seg.arcParams;
-				
+
 				// Calculate actual arc center in original coordinates
 				const { cx: cx0, cy: cy0 } = calculateArcCenter(x1, y1, x2, y2, rx, ry, xRot || 0, largeArc || 0, sweep || 0);
-				
+
 				// Transform for BASE shape
-				const baseTransX = dx + baseOffsetX + deltaBaseX;
-				const baseTransY = dy + baseOffsetY;
-				const basePt = transformPoint(cx0, cy0, scale, scale, rotation, c0x, c0y, baseTransX, baseTransY);
-				const baseR = (rx + ry) / 2 * scale;
-				
-				debugParts.push(`<circle cx="${basePt.x}" cy="${basePt.y}" r="${baseR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
-				debugParts.push(`<circle cx="${basePt.x}" cy="${basePt.y}" r="1" fill="red"/>`);
-				
-				// Transform for MIRROR shape
-				// SVG transforms apply right-to-left:
-				// scale(1 1) → rotate(-270 c0x c0y) → translate(-cBx,-cBy) → scale(-1 1) → translate(cBx,cBy) → translate(mirror) → translate(dx,dy)
-				
-				let mx = cx0;
-				let my = cy0;
-				
-				// 1. scale(1 1) - apply scale first
-				mx *= scale;
-				my *= scale;
-				
-				// 2. rotate around c0
+				let bx = cx0;
+				let by = cy0;
+
+				bx *= scale;
+				by *= scale;
+
 				const cosR = Math.cos(rotation);
 				const sinR = Math.sin(rotation);
+				let dbx = bx - c0x;
+				let dby = by - c0y;
+				bx = c0x + dbx * cosR - dby * sinR;
+				by = c0y + dbx * sinR + dby * cosR;
+
+				bx += dx + baseOffsetX + deltaBaseX;
+				by += dy + baseOffsetY;
+
+				const baseRx = rx * scale;
+				const baseRy = ry * scale;
+
+				// Calculate number of spikes based on arc perimeter (same as circle)
+				const arcPerimeter = Math.PI * (3 * (baseRx + baseRy) - Math.sqrt((3 * baseRx + baseRy) * (baseRx + 3 * baseRy)));
+				const numSpikes = Math.max(12, Math.min(48, Math.round(arcPerimeter / 8)));
+
+				// Generate star tabs for base
+				addArcStarTabs(bx, by, baseRx, baseRy, numSpikes);
+
+				// Debug circle for base
+				const avgR = (baseRx + baseRy) / 2;
+				debugParts.push(`<circle cx="${bx}" cy="${by}" r="${avgR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${bx}" cy="${by}" r="1" fill="red"/>`);
+				debugParts.push(`<ellipse cx="${bx}" cy="${by}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="orange" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+
+
+				// Transform for MIRROR shape
+				let mx = cx0;
+				let my = cy0;
+
+				mx *= scale;
+				my *= scale;
+
 				let dmx = mx - c0x;
 				let dmy = my - c0y;
 				mx = c0x + dmx * cosR - dmy * sinR;
 				my = c0y + dmx * sinR + dmy * cosR;
-				
-				// 3. translate(-cBx, -cBy)
+
 				mx -= cBx;
 				my -= cBy;
-				
-				// 4. scale(-1, 1) - horizontal flip
+
 				mx = -mx;
-				
-				// 5. translate(cBx, cBy)
+
 				mx += cBx;
 				my += cBy;
-				
-				// 6. translate(mirror offset)
+
 				mx += mirrorOffsetX + deltaMirrorX;
 				my += mirrorOffsetY;
-				
-				// 7. translate(dx, dy) - final centering
+
 				mx += dx;
 				my += dy;
-				
-				debugParts.push(`<circle cx="${mx}" cy="${my}" r="${baseR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+
+				// Generate star tabs for mirror
+				addArcStarTabs(mx, my, baseRx, baseRy, numSpikes);
+
+				// Debug circle for mirror
+				debugParts.push(`<circle cx="${mx}" cy="${my}" r="${avgR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
 				debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
+				debugParts.push(`<ellipse cx="${mx}" cy="${my}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="cyan" stroke-width="0.3" stroke-dasharray="1,1"/>`);
 			}
 		}
-	}
-
-	let parts = [];
+	} let parts = [];
 	parts.push(`<g id="GLUE_SIDE">${glueSideParts.join("\n")}</g>`);
 	parts.push(`<g id="GLUE_SHAPE">${glueShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="SHAPE">${shapeParts.join("\n")}</g>`);
