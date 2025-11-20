@@ -271,8 +271,75 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		}
 	}
 
-	// Add tabs for base and mirror (only if they're polygons, not circles/ellipses)
-	if (!useCircle && !useEllipse) {
+	// Helper function to add star-pattern tabs around circle/ellipse
+	function addCircleStarTabs(cx, cy, rx, ry) {
+		// Calculate number of spikes based on perimeter (approximately one spike per 8-10mm)
+		const perimeter = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+		const numSpikes = Math.max(12, Math.min(48, Math.round(perimeter / 8)));
+
+		// Create a single star-shaped path alternating between inner and outer radii
+		// Inner radius = rx/ry (on perimeter), outer radius = rx/ry + tabW (extended)
+		const pathParts = [];
+		const foldParts = [];
+
+		for (let i = 0; i < numSpikes * 2; i++) {
+			const angle = (i * Math.PI) / numSpikes;
+			const isOuter = i % 2 === 1;
+
+			let x, y;
+			if (isOuter) {
+				// Outer point (spike tip)
+				x = cx + (rx + tabW) * Math.cos(angle);
+				y = cy + (ry + tabW) * Math.sin(angle);
+			} else {
+				// Inner point (on perimeter)
+				x = cx + rx * Math.cos(angle);
+				y = cy + ry * Math.sin(angle);
+			}
+
+			if (i === 0) {
+				pathParts.push(`M ${x},${y}`);
+			} else {
+				pathParts.push(`L ${x},${y}`);
+			}
+
+			// Add fold lines along the inner (perimeter) edges only
+			if (!isOuter && i > 0) {
+				const prevAngle = ((i - 2) * Math.PI) / numSpikes;
+				const x1 = cx + rx * Math.cos(prevAngle);
+				const y1 = cy + ry * Math.sin(prevAngle);
+				foldParts.push(`<path d="M ${x1},${y1} L ${x},${y}" ${foldStyle}/>`);
+			}
+		}
+
+		pathParts.push('Z');
+		glueShapeParts.push(`<path d="${pathParts.join(' ')}" ${tabStyle}/>`);
+		foldShapeParts.push(...foldParts);
+	}
+
+	// Add tabs for base and mirror
+	if (useCircle || useEllipse) {
+		// Star-pattern tabs for circles and ellipses
+		const stackLeftX = stackedC[0].x;
+		const stackRightX = stackedC[0].x + stackedC[0].w;
+		const stackTopY = stackedC[0].y;
+		const stackMidY = stackTopY + (stackedC.reduce((s, r) => s + r.h, 0)) / 2;
+
+		if (useCircle) {
+			const { r } = originalShape.shapeParams;
+			const baseCx = stackLeftX - r;
+			const mirrCx = stackRightX + r;
+			addCircleStarTabs(baseCx, stackMidY, r, r);
+			addCircleStarTabs(mirrCx, stackMidY, r, r);
+		} else {
+			const { rx, ry } = originalShape.shapeParams;
+			const baseCx = stackLeftX - rx;
+			const mirrCx = stackRightX + rx;
+			addCircleStarTabs(baseCx, stackMidY, rx, ry);
+			addCircleStarTabs(mirrCx, stackMidY, rx, ry);
+		}
+	} else {
+		// Polygon edge tabs for non-circular shapes
 		addShapeEdgeTabs(baseC, true);
 		addShapeEdgeTabs(mirrorC, false);
 	}

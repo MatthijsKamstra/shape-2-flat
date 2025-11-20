@@ -184,24 +184,33 @@ describe("Shape Types Preservation", () => {
 	});
 });
 
-describe("Circle/Ellipse - No Shape Glue Tabs", () => {
-	it("should not generate GLUE_SHAPE tabs for circles", () => {
+describe("Circle/Ellipse - Star Pattern Glue Tabs", () => {
+	it("should generate star-pattern GLUE_SHAPE tabs for circles", () => {
 		const svgCircle = '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>';
 		const result = generateNet({ svgContent: svgCircle, depth: 30 });
 
 		const glueShapeGroup = extractGroup(result.svg, 'GLUE_SHAPE');
-		// Circles are primitives, not polygons, so no shape tabs
+		// Circles should have 2 star-shaped paths (one for base, one for mirror)
 		const pathCount = countMatches(glueShapeGroup, '<path');
-		assert.equal(pathCount, 0, `Circle should not have shape glue tabs, got ${pathCount}`);
+		assert.equal(pathCount, 2, `Circle should have 2 star-shaped paths, got ${pathCount}`);
+
+		// Verify the star has multiple points (M followed by many L commands and Z)
+		const starPattern = /M [^Z]+L [^Z]+L [^Z]+L [^Z]+L [^Z]+Z/;
+		assert.ok(starPattern.test(glueShapeGroup), "Should have star-shaped path with multiple points");
 	});
 
-	it("should not generate GLUE_SHAPE tabs for ellipses", () => {
+	it("should generate star-pattern GLUE_SHAPE tabs for ellipses", () => {
 		const svgEllipse = '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="50" rx="40" ry="30"/></svg>';
 		const result = generateNet({ svgContent: svgEllipse, depth: 30 });
 
 		const glueShapeGroup = extractGroup(result.svg, 'GLUE_SHAPE');
+		// Ellipses should have 2 star-shaped paths (one for base, one for mirror)
 		const pathCount = countMatches(glueShapeGroup, '<path');
-		assert.equal(pathCount, 0, `Ellipse should not have shape glue tabs, got ${pathCount}`);
+		assert.equal(pathCount, 2, `Ellipse should have 2 star-shaped paths, got ${pathCount}`);
+
+		// Verify the star has multiple points
+		const starPattern = /M [^Z]+L [^Z]+L [^Z]+L [^Z]+L [^Z]+Z/;
+		assert.ok(starPattern.test(glueShapeGroup), "Should have star-shaped path with multiple points");
 	});
 
 	it("should still generate GLUE_SIDE tabs for circle side panels", () => {

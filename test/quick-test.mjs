@@ -24,7 +24,7 @@ try {
 
 	console.log("   ✓ Rectangle has glue tabs");
 
-	// Test 2: Circle (should NOT have shape glue tabs)
+	// Test 2: Circle (should have star-pattern glue tabs)
 	console.log("2. Testing circle...");
 	const circle = generateNet({
 		svgContent: '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>',
@@ -37,11 +37,11 @@ try {
 
 	const circleGlueShape = circle.svg.match(/<g id="GLUE_SHAPE"[^>]*>([\s\S]*?)<\/g>/);
 	const hasCircleShapeTabs = circleGlueShape && circleGlueShape[1].includes('<path');
-	if (hasCircleShapeTabs) {
-		throw new Error("Circle should NOT have shape glue tabs");
+	if (!hasCircleShapeTabs) {
+		throw new Error("Circle should have star-pattern shape glue tabs");
 	}
 
-	console.log("   ✓ Circle preserved correctly without shape tabs");
+	console.log("   ✓ Circle preserved with star-pattern tabs");
 
 	// Test 3: Rect from SVG
 	console.log("3. Testing rect from SVG...");
