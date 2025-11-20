@@ -13,7 +13,7 @@ Convert an SVG path into a printable A4 SVG net (unfolded layout) of an extruded
     - width = extrusion depth (die je via --depth opgeeft)
 - Outputs an A4-sized SVG (210×297mm) with white-filled shapes and black stroke outlines
 - Groups: <g id="SHAPE"> for base/mirror/sides, <g id="GLUE"> for glue tabs, <g id="FOLDING_LINES"> for dashed fold lines, <g id="DESIGN"> reserved for overlays
-- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke. For circle/ellipse, vertical seams use saw‑tooth (triangular) tabs for easier bending; top/bottom remain 45°. Tabs render into GLUE and do not affect SHAPE centering. Fold lines are drawn into FOLDING_LINES.
+- Glue tabs: 7 mm tabs with 45° angled ends (papertoy style), gray fill (#ccc) without stroke. For shapes with curves (circle/ellipse/Bézier curves), vertical seams use saw‑tooth (triangular) tabs for easier bending; top/bottom remain 45°. Tabs render into GLUE and do not affect SHAPE centering. Fold lines are drawn into FOLDING_LINES.
 - Primitives: circle/ellipse/rect inputs render as their original primitives in SHAPE (not converted to paths). Circle/ellipse are tangent‑aligned to the side stack (base: rightmost point, mirror: leftmost point).
 - Perimeter overlay: a small "Perimeter: N unit" label is added in DESIGN for quick validation (equals the total side‑strip length/circumference).
 

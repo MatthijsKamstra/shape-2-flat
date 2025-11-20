@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297">
+<rect x="0" y="0" width="100%" height="100%" fill="white" id="BG"/>
+<g id="GLUE"><path d="M 92.5,-35.92964502530461 L 85.5,-28.92964502530461 L 85.5,57.07035497469539 L 92.5,64.07035497469539 Z" fill="#e5e5e5"/>
+<path d="M 117.5,-35.92964502530461 L 124.5,-28.92964502530461 L 124.5,57.07035497469539 L 117.5,64.07035497469539 Z" fill="#e5e5e5"/>
+<path d="M 92.5,-35.92964502530461 L 99.5,-42.92964502530461 L 110.5,-42.92964502530461 L 117.5,-35.92964502530461 Z" fill="#e5e5e5"/>
+<path d="M 92.5,64.07035497469539 L 99.5,71.07035497469539 L 110.5,71.07035497469539 L 117.5,64.07035497469539 Z" fill="#e5e5e5"/>
+<path d="M 92.5,64.07035497469539 L 85.5,71.07035497469539 L 85.5,157.0703549746954 L 92.5,164.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 117.5,64.07035497469539 L 124.5,71.07035497469539 L 124.5,157.0703549746954 L 117.5,164.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,64.07035497469539 L 99.5,57.07035497469539 L 110.5,57.07035497469539 L 117.5,64.07035497469539 Z" fill="#e5e5e5"/>
+<path d="M 92.5,164.0703549746954 L 99.5,171.0703549746954 L 110.5,171.0703549746954 L 117.5,164.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,164.0703549746954 L 85.5,171.0703549746954 L 85.5,187.0703549746954 L 92.5,194.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 117.5,164.0703549746954 L 124.5,171.0703549746954 L 124.5,187.0703549746954 L 117.5,194.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,164.0703549746954 L 99.5,157.0703549746954 L 110.5,157.0703549746954 L 117.5,164.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,194.0703549746954 L 99.5,201.0703549746954 L 110.5,201.0703549746954 L 117.5,194.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,194.0703549746954 L 85.5,197.5703549746954 L 92.5,201.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,201.0703549746954 L 85.5,204.5703549746954 L 92.5,208.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,208.0703549746954 L 85.5,211.5703549746954 L 92.5,215.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,215.0703549746954 L 85.5,218.5703549746954 L 92.5,222.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,222.0703549746954 L 85.5,223.77830029920335 L 92.5,225.48624562371134 Z" fill="#e5e5e5"/>
+<path d="M 117.5,194.0703549746954 L 124.5,197.5703549746954 L 117.5,201.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 117.5,201.0703549746954 L 124.5,204.5703549746954 L 117.5,208.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 117.5,208.0703549746954 L 124.5,211.5703549746954 L 117.5,215.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 117.5,215.0703549746954 L 124.5,218.5703549746954 L 117.5,222.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 117.5,222.0703549746954 L 124.5,223.77830029920335 L 117.5,225.48624562371134 Z" fill="#e5e5e5"/>
+<path d="M 92.5,194.0703549746954 L 99.5,187.0703549746954 L 110.5,187.0703549746954 L 117.5,194.0703549746954 Z" fill="#e5e5e5"/>
+<path d="M 92.5,225.48624562371134 L 99.5,232.48624562371134 L 110.5,232.48624562371134 L 117.5,225.48624562371134 Z" fill="#e5e5e5"/>
+<path d="M 92.5,225.48624562371137 L 85.5,232.48624562371137 L 85.5,248.48624562371137 L 92.5,255.48624562371137 Z" fill="#e5e5e5"/>
+<path d="M 117.5,225.48624562371137 L 124.5,232.48624562371137 L 124.5,248.48624562371137 L 117.5,255.48624562371137 Z" fill="#e5e5e5"/>
+<path d="M 92.5,225.48624562371137 L 99.5,218.48624562371137 L 110.5,218.48624562371137 L 117.5,225.48624562371137 Z" fill="#e5e5e5"/>
+<path d="M 92.5,255.48624562371137 L 99.5,262.4862456237114 L 110.5,262.4862456237114 L 117.5,255.48624562371137 Z" fill="#e5e5e5"/>
+<path d="M 92.5,255.48624562371137 L 85.5,258.9862456237114 L 92.5,262.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,262.4862456237114 L 85.5,265.9862456237114 L 92.5,269.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,269.4862456237114 L 85.5,272.9862456237114 L 92.5,276.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,276.4862456237114 L 85.5,279.9862456237114 L 92.5,283.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,283.4862456237114 L 85.5,286.9862456237114 L 92.5,290.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,290.4862456237114 L 85.5,293.9862456237114 L 92.5,297.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,297.4862456237114 L 85.5,300.9862456237114 L 92.5,304.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,304.4862456237114 L 85.5,307.9862456237114 L 92.5,311.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,311.4862456237114 L 85.5,314.9862456237114 L 92.5,318.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,318.4862456237114 L 85.5,321.9862456237114 L 92.5,325.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,325.4862456237114 L 85.5,328.9862456237114 L 92.5,332.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 92.5,332.4862456237114 L 85.5,332.70794532450805 L 92.5,332.92964502530464 Z" fill="#e5e5e5"/>
+<path d="M 117.5,255.48624562371137 L 124.5,258.9862456237114 L 117.5,262.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,262.4862456237114 L 124.5,265.9862456237114 L 117.5,269.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,269.4862456237114 L 124.5,272.9862456237114 L 117.5,276.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,276.4862456237114 L 124.5,279.9862456237114 L 117.5,283.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,283.4862456237114 L 124.5,286.9862456237114 L 117.5,290.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,290.4862456237114 L 124.5,293.9862456237114 L 117.5,297.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,297.4862456237114 L 124.5,300.9862456237114 L 117.5,304.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,304.4862456237114 L 124.5,307.9862456237114 L 117.5,311.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,311.4862456237114 L 124.5,314.9862456237114 L 117.5,318.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,318.4862456237114 L 124.5,321.9862456237114 L 117.5,325.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,325.4862456237114 L 124.5,328.9862456237114 L 117.5,332.4862456237114 Z" fill="#e5e5e5"/>
+<path d="M 117.5,332.4862456237114 L 124.5,332.70794532450805 L 117.5,332.92964502530464 Z" fill="#e5e5e5"/>
+<path d="M 92.5,255.48624562371137 L 99.5,248.48624562371137 L 110.5,248.48624562371137 L 117.5,255.48624562371137 Z" fill="#e5e5e5"/>
+<path d="M 92.5,332.92964502530464 L 99.5,339.92964502530464 L 110.5,339.92964502530464 L 117.5,332.92964502530464 Z" fill="#e5e5e5"/></g>
+<g id="SHAPE"><path d="M 0,0 L 30,0 A 20 20 0 0 1 50,20 L 50,50 C 50,75 75,100 100,100 L 0,100 Z" transform="translate(82.5,-45.92964502530461) translate(-91.77313970014342,17.03980826981123) rotate(-270 54.40647398497732 47.3666657151661) scale(1 1)" fill="#e5e5e5" stroke="#000" stroke-width="0.6"/>
+<path d="M 0,0 L 30,0 A 20 20 0 0 1 50,20 L 50,50 C 50,75 75,100 100,100 L 0,100 Z" transform="translate(82.5,-45.92964502530461) translate(27.960191730188825,17.03980826981123) translate(54.406473984977296,47.36666571516609) scale(-1 1) translate(-54.406473984977296,-47.36666571516609) rotate(-270 54.40647398497732 47.3666657151661) scale(1 1)" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="92.5" y="-35.92964502530461" width="25" height="100" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="92.5" y="64.07035497469539" width="25" height="100" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="92.5" y="164.0703549746954" width="25" height="30" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="92.5" y="194.0703549746954" width="25" height="31.415890649015957" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="92.5" y="225.48624562371137" width="25" height="30" fill="white" stroke="#000" stroke-width="0.6"/>
+<rect x="92.5" y="255.48624562371137" width="25" height="77.44339940159325" fill="white" stroke="#000" stroke-width="0.6"/></g>
+<g id="FOLDING_LINES"><path d="M 92.5,-35.92964502530461 L 92.5,64.07035497469539" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 117.5,-35.92964502530461 L 117.5,64.07035497469539" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,-35.92964502530461 L 117.5,-35.92964502530461" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,64.07035497469539 L 117.5,64.07035497469539" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,64.07035497469539 L 92.5,164.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 117.5,64.07035497469539 L 117.5,164.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,64.07035497469539 L 117.5,64.07035497469539" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,164.0703549746954 L 117.5,164.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,164.0703549746954 L 92.5,194.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 117.5,164.0703549746954 L 117.5,194.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,164.0703549746954 L 117.5,164.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,194.0703549746954 L 117.5,194.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,194.0703549746954 L 92.5,225.48624562371134" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 117.5,194.0703549746954 L 117.5,225.48624562371134" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,194.0703549746954 L 117.5,194.0703549746954" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,225.48624562371134 L 117.5,225.48624562371134" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,225.48624562371137 L 92.5,255.48624562371137" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 117.5,225.48624562371137 L 117.5,255.48624562371137" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,225.48624562371137 L 117.5,225.48624562371137" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,255.48624562371137 L 117.5,255.48624562371137" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,255.48624562371137 L 92.5,332.92964502530464" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 117.5,255.48624562371137 L 117.5,332.92964502530464" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,255.48624562371137 L 117.5,255.48624562371137" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/>
+<path d="M 92.5,332.92964502530464 L 117.5,332.92964502530464" fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"/></g>
+<g id="CUT_LINES"></g>
+<g id="DESIGN"></g>
+<g id="INFO"><text x="5" y="10" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Perimeter (strip length): 368.86 mm</text>
+<text x="5" y="16" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Base footprint: 100.00 × 99.92 mm</text>
+<text x="5" y="22" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Depth: 25.00 mm (panels=6)</text>
+<text x="5" y="28" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Scale: 1×, Margin: 10mm</text>
+<text x="5" y="34" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Input: path edges=6</text>
+<text x="5" y="40" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 0: type=line, height=100.00mm, width=25.00mm</text>
+<text x="5" y="46" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 1: type=line, height=100.00mm, width=25.00mm</text>
+<text x="5" y="52" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 2: type=line, height=30.00mm, width=25.00mm</text>
+<text x="5" y="58" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 3: type=arc, height=31.42mm, width=25.00mm</text>
+<text x="5" y="64" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 4: type=line, height=30.00mm, width=25.00mm</text>
+<text x="5" y="70" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Panel 5: type=curve, height=77.44mm, width=25.00mm</text>
+<text x="5" y="76" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 0: type=line, length=30.00mm, angle=0.0°</text>
+<text x="5" y="82" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 1: type=arc, length=31.42mm, angle=N/A</text>
+<text x="5" y="88" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 2: type=line, length=30.00mm, angle=90.0°</text>
+<text x="5" y="94" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 3: type=curve, length=77.44mm, angle=N/A</text>
+<text x="5" y="100" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 4: type=line, length=100.00mm, angle=180.0°</text>
+<text x="5" y="106" font-family="Arial, Helvetica, sans-serif" font-size="6" fill="#000">Edge 5: type=line, length=100.00mm, angle=-90.0°</text></g>
+</svg>

@@ -148,7 +148,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		shapeParts.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" ${extrudeStyle}/>`);
 	}
 
-	// Glue tabs: 7 mm with 45° angled ends on all four sides; for circle/ellipse use saw-tooth on left/right seams
+	// Glue tabs: 7 mm with 45° angled ends on all four sides; for circle/ellipse/curves use saw-tooth on left/right seams
 	const tabW = 7;
 	const foldStyle = 'fill="none" stroke="#FFF" stroke-width="0.4" stroke-dasharray="2,1"';
 	const glueParts = [];
@@ -162,7 +162,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const yTop = r.y;
 			const yBot = r.y + r.h;
 			const xOut = r.x - tabW;
-			if (isCurvyShape && r.type === 'arc') {
+			if (isCurvyShape && (r.type === 'arc' || r.type === 'curve')) {
 				// Saw-tooth triangles along the seam
 				let y0 = yTop;
 				while (y0 < yBot - 1e-6) {
@@ -185,7 +185,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const yTop = r.y;
 			const yBot = r.y + r.h;
 			const xOut = r.x + r.w + tabW;
-			if (isCurvyShape && r.type === 'arc') {
+			if (isCurvyShape && (r.type === 'arc' || r.type === 'curve')) {
 				let y0 = yTop;
 				while (y0 < yBot - 1e-6) {
 					const y1 = Math.min(y0 + toothPitch, yBot);

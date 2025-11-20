@@ -59,7 +59,7 @@ function generateNet(opts = {}) {
 	try {
 		const segs = computeSegmentLengthsFromPath(d);
 		if (segs && segs.length) {
-			hasArcs = segs.some(s => s.type === "arc");
+			hasArcs = segs.some(s => s.type === "arc" || s.type === "curve");
 			if (info.kind === "circle" || info.kind === "ellipse") {
 				const totalArc = segs.filter(s => s.type === "arc").reduce((a, s) => a + s.length, 0);
 				edgeLengths = totalArc > 0 ? [{ type: "arc", length: totalArc }] : segs;
