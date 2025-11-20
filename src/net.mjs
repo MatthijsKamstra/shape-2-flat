@@ -160,14 +160,14 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 			if (edgeLengths[i].type === 'line' && diff < bestDiff) { bestDiff = diff; startIdx = i; }
 		}
 		const reordered = edgeLengths.slice(startIdx).concat(edgeLengths.slice(0, startIdx));
-		segments = reordered.map(s => ({ 
-			h: s.length, 
-			type: s.type || 'line', 
+		segments = reordered.map(s => ({
+			h: s.length,
+			type: s.type || 'line',
 			arcParams: s.arcParams,
-			x1: s.x1, 
-			y1: s.y1, 
-			x2: s.x2, 
-			y2: s.y2 
+			x1: s.x1,
+			y1: s.y1,
+			x2: s.x2,
+			y2: s.y2
 		}));
 	} else {
 		// Default from rotated polygon edges
@@ -184,10 +184,10 @@ function makeNet(poly, depth, { minSegment = 0.5, edgeLengths } = {}) {
 			mergedSegs.push({ ...s });
 		}
 	}
-	const sideRects = mergedSegs.map(s => ({ 
-		w: depth, 
-		h: s.h, 
-		type: s.type, 
+	const sideRects = mergedSegs.map(s => ({
+		w: depth,
+		h: s.h,
+		type: s.type,
 		arcParams: s.arcParams,
 		x1: s.x1,
 		y1: s.y1,

@@ -50,12 +50,12 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// Now stack rectangles at (sx, sy)
 	let cy = sy;
 	const stacked = net.sideRects.map(seg => {
-		const r = { 
-			x: sx, 
-			y: cy, 
-			w: seg.w, 
-			h: seg.h, 
-			type: seg.type || 'line', 
+		const r = {
+			x: sx,
+			y: cy,
+			w: seg.w,
+			h: seg.h,
+			type: seg.type || 'line',
 			arcParams: seg.arcParams,
 			x1: seg.x1,
 			y1: seg.y1,
@@ -99,12 +99,12 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const baseC = translate(base, dx, dy);
 	const mirrorC = translate(baseMirror, dx, dy);
-	const stackedC = stacked.map(r => ({ 
-		x: r.x + dx, 
-		y: r.y + dy, 
-		w: r.w, 
-		h: r.h, 
-		type: r.type, 
+	const stackedC = stacked.map(r => ({
+		x: r.x + dx,
+		y: r.y + dy,
+		w: r.w,
+		h: r.h,
+		type: r.type,
 		arcParams: r.arcParams,
 		x1: r.x1,
 		y1: r.y1,
@@ -372,7 +372,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		// Only use polygon-based tabs if the shape doesn't have arcs
 		// (arcs are handled separately with proper arc center calculation)
 		const hasArcs = stackedC.some(r => r.type === 'arc' || r.type === 'curve');
-		
+
 		if (!hasArcs) {
 			const segmentTypes = stackedC.map(r => r.type || 'line');
 			addShapeEdgeTabs(baseC, true, segmentTypes);
@@ -594,7 +594,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		// Generate tabs for straight line segments using their stored endpoints
 		const cosR = Math.cos(rotation);
 		const sinR = Math.sin(rotation);
-		
+
 		for (const seg of stackedC) {
 			if (seg.type !== 'line' || !seg.x1) continue; // Skip if not a line or no endpoint data
 
@@ -624,7 +624,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const edgeVy = by2 - by1;
 			const edgeLen = Math.sqrt(edgeVx * edgeVx + edgeVy * edgeVy);
 			if (edgeLen < 1e-6) continue;
-			
+
 			const edgeTx = edgeVx / edgeLen;
 			const edgeTy = edgeVy / edgeLen;
 			const edgeNx = -edgeTy;
@@ -674,7 +674,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const mEdgeVy = my2 - my1;
 			const mEdgeLen = Math.sqrt(mEdgeVx * mEdgeVx + mEdgeVy * mEdgeVy);
 			if (mEdgeLen < 1e-6) continue;
-			
+
 			const mEdgeTx = mEdgeVx / mEdgeLen;
 			const mEdgeTy = mEdgeVy / mEdgeLen;
 			const mEdgeNx = -mEdgeTy;
