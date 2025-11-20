@@ -115,14 +115,14 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			shapeParts.push(`<ellipse cx="${baseCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
 			shapeParts.push(`<ellipse cx="${mirrCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${mirrorStyle}/>`);
 		}
-	} else if (useRect) {
+	} else if (useRect || (originalShape && originalShape.kind === 'rect')) {
+		// Render as axis-aligned rects using the rotated polygon bbox
 		const bBox = bboxOfPoints(baseC);
 		const mBox = bboxOfPoints(mirrorC);
 		const bw = bBox.maxX - bBox.minX;
 		const bh = bBox.maxY - bBox.minY;
 		const mw = mBox.maxX - mBox.minX;
 		const mh = mBox.maxY - mBox.minY;
-		// Render axis-aligned rects matching the aligned base/mirror footprints
 		shapeParts.push(`<rect x="${bBox.minX}" y="${bBox.minY}" width="${bw}" height="${bh}" ${baseStyle}/>`);
 		shapeParts.push(`<rect x="${mBox.minX}" y="${mBox.minY}" width="${mw}" height="${mh}" ${mirrorStyle}/>`);
 	} else if (originalShape && originalShape.kind === 'path' && originalShape.d && net.rotation) {
@@ -225,6 +225,71 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			glueSideParts.push(`<path d="${d}" ${tabStyle}/>`);
 			foldSideParts.push(`<path d="M ${xLeft},${yFold} L ${xRight},${yFold}" ${foldStyle}/>`);
 		}
+	}
+
+	// Add glue tabs and fold lines for base and mirror shapes
+	// Base shape tabs (on perimeter edges that don't touch the side stack)
+	const stackLeft = stackedC[0].x;
+	const stackRight = stackedC[0].x + stackedC[0].w;
+
+	// Helper function to add tabs along a polygon edge
+	function addShapeEdgeTabs(points, isBase) {
+		for (let i = 0; i < points.length; i++) {
+			const [x1, y1] = points[i];
+			const [x2, y2] = points[(i + 1) % points.length];
+			
+			// Calculate edge direction and normal
+			const dx = x2 - x1;
+			const dy = y2 - y1;
+			const len = Math.hypot(dx, dy);
+			if (len < 1e-6) continue;
+			
+			// Unit tangent and normal (outward)
+			const tx = dx / len;
+			const ty = dy / len;
+			const nx = -ty;
+			const ny = tx;
+			
+			// Add fold line along the edge
+			foldShapeParts.push(`<path d="M ${x1},${y1} L ${x2},${y2}" ${foldStyle}/>`);
+			
+			// Determine if edge is horizontal or vertical for tab placement
+			const isHorizontal = Math.abs(dy) < Math.abs(dx);
+			
+			if (isHorizontal) {
+				// Horizontal edge: tabs above and below (like top/bottom tabs on side rects)
+				const hDelta = Math.min(tabW, len / 2);
+				
+				// Tab above (outward in normal direction)
+				const yOut1 = y1 + ny * tabW;
+				const d1 = `M ${x1},${y1} L ${x1 + tx * hDelta},${y1 + ny * tabW} L ${x2 - tx * hDelta},${y2 + ny * tabW} L ${x2},${y2} Z`;
+				glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
+				
+				// Tab below (outward in opposite normal direction)
+				const yOut2 = y1 - ny * tabW;
+				const d2 = `M ${x1},${y1} L ${x1 + tx * hDelta},${y1 - ny * tabW} L ${x2 - tx * hDelta},${y2 - ny * tabW} L ${x2},${y2} Z`;
+				glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
+			} else {
+				// Vertical edge: tabs on left and right (like left/right tabs on side rects)
+				const vDelta = Math.min(tabW, len / 2);
+				
+				// Tab to the right (outward in normal direction)
+				const xOut1 = x1 + nx * tabW;
+				const d1 = `M ${x1},${y1} L ${x1 + nx * tabW},${y1 + ty * vDelta} L ${x2 + nx * tabW},${y2 - ty * vDelta} L ${x2},${y2} Z`;
+				glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
+				
+				// Tab to the left (outward in opposite normal direction)
+				const xOut2 = x1 - nx * tabW;
+				const d2 = `M ${x1},${y1} L ${x1 - nx * tabW},${y1 + ty * vDelta} L ${x2 - nx * tabW},${y2 - ty * vDelta} L ${x2},${y2} Z`;
+				glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
+			}
+		}
+	}
+
+	// Add tabs for base and mirror (only if they're polygons, not circles/ellipses)
+	if (!useCircle && !useEllipse) {
+		addShapeEdgeTabs(baseC, true);
+		addShapeEdgeTabs(mirrorC, false);
 	}
 
 	// Info text: circumference/perimeter equals total side strip length
