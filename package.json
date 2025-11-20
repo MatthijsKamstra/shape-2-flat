@@ -8,7 +8,8 @@
   "main": "src/core.mjs",
   "scripts": {
     "start": "node bin/shape-2-flat.js",
-    "dev": "node bin/shape-2-flat.js --help"
+    "dev": "node bin/shape-2-flat.js --help",
+    "test": "node test/path-segments.test.mjs"
   },
   "keywords": [
     "svg",
