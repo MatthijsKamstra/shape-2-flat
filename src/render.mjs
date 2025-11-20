@@ -249,42 +249,25 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			// Unit tangent and normal (outward)
 			const tx = dx / len;
 			const ty = dy / len;
-			const nx = -ty;
+			const nx = -ty;  // perpendicular to tangent (rotated 90° clockwise)
 			const ny = tx;
 
 			// Add fold line along the edge
 			foldShapeParts.push(`<path d="M ${x1},${y1} L ${x2},${y2}" ${foldStyle}/>`);
 
-			// Determine if edge is horizontal or vertical for tab placement
-			const isHorizontal = Math.abs(dy) < Math.abs(dx);
+			// Taper distance from edge endpoints (for trapezoid shape)
+			const taper = Math.min(tabW, len / 2);
 
-			if (isHorizontal) {
-				// Horizontal edge: tabs above and below (like top/bottom tabs on side rects)
-				const hDelta = Math.min(tabW, len / 2);
+			// Create tabs on both sides of the edge, perpendicular to the edge direction
+			// Tab extends perpendicular using normal vector (nx, ny)
 
-				// Tab above (outward in normal direction)
-				const yOut1 = y1 + ny * tabW;
-				const d1 = `M ${x1},${y1} L ${x1 + tx * hDelta},${y1 + ny * tabW} L ${x2 - tx * hDelta},${y2 + ny * tabW} L ${x2},${y2} Z`;
-				glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
+			// Tab 1: extends in positive normal direction
+			const d1 = `M ${x1},${y1} L ${x1 + tx * taper + nx * tabW},${y1 + ty * taper + ny * tabW} L ${x2 - tx * taper + nx * tabW},${y2 - ty * taper + ny * tabW} L ${x2},${y2} Z`;
+			glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
 
-				// Tab below (outward in opposite normal direction)
-				const yOut2 = y1 - ny * tabW;
-				const d2 = `M ${x1},${y1} L ${x1 + tx * hDelta},${y1 - ny * tabW} L ${x2 - tx * hDelta},${y2 - ny * tabW} L ${x2},${y2} Z`;
-				glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
-			} else {
-				// Vertical edge: tabs on left and right (like left/right tabs on side rects)
-				const vDelta = Math.min(tabW, len / 2);
-
-				// Tab to the right (outward in normal direction)
-				const xOut1 = x1 + nx * tabW;
-				const d1 = `M ${x1},${y1} L ${x1 + nx * tabW},${y1 + ty * vDelta} L ${x2 + nx * tabW},${y2 - ty * vDelta} L ${x2},${y2} Z`;
-				glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
-
-				// Tab to the left (outward in opposite normal direction)
-				const xOut2 = x1 - nx * tabW;
-				const d2 = `M ${x1},${y1} L ${x1 - nx * tabW},${y1 + ty * vDelta} L ${x2 - nx * tabW},${y2 - ty * vDelta} L ${x2},${y2} Z`;
-				glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
-			}
+			// Tab 2: extends in negative normal direction
+			const d2 = `M ${x1},${y1} L ${x1 + tx * taper - nx * tabW},${y1 + ty * taper - ny * tabW} L ${x2 - tx * taper - nx * tabW},${y2 - ty * taper - ny * tabW} L ${x2},${y2} Z`;
+			glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
 		}
 	}
 
