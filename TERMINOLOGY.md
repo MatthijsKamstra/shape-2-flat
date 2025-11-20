@@ -36,14 +36,29 @@
 - **SHAPE fill/stroke**:
   - Base: gray fill `#e5e5e5`, black stroke `stroke-width=0.6`
   - Mirror & sides: white fill, black stroke `stroke-width=0.6`
-- **Glue tabs**: 7mm with 45° angled ends on all four sides; for circles/ellipses, vertical seams use saw-tooth triangular tabs
+- **Glue tabs**: 7mm with 45° angled ends on all four sides; for shapes with curves (circles/ellipses/Bézier curves), vertical seams use saw-tooth triangular tabs for easier bending
 - **Primitives**: rect/circle/ellipse inputs preserved as native SVG elements (not converted to paths)
+
+## Path Command Support
+
+All SVG path commands are fully supported:
+
+- **M/m** - MoveTo (absolute/relative)
+- **L/l** - LineTo (absolute/relative)
+- **H/h** - Horizontal LineTo (absolute/relative)
+- **V/v** - Vertical LineTo (absolute/relative)
+- **A/a** - Arc (absolute/relative) - uses `svg-path-properties` for accurate length
+- **C/c** - Cubic Bézier curve (absolute/relative)
+- **Q/q** - Quadratic Bézier curve (absolute/relative)
+- **S/s** - Smooth cubic Bézier (absolute/relative) - with control point reflection
+- **T/t** - Smooth quadratic Bézier (absolute/relative) - with control point reflection
+- **Z/z** - ClosePath (case-insensitive)
 
 ## Pipeline
 
 1. **Input** (`src/svg-io.mjs`): Parse SVG → extract path data (supports `path`/`rect`/`circle`/`ellipse`/`polygon`/`polyline`)
-2. **Flatten** (`src/path-flatten.mjs`): Convert curves to polygon points with `--tolerance`
+2. **Flatten** (`src/path-flatten.mjs`): Convert curves to polygon points with `--tolerance` (fallback for complex paths)
 3. **Simplify** (`src/path-flatten.mjs`): Remove colinear points while preserving shape
-4. **Compute** (`src/path-segments.mjs`): Calculate arc/line segment lengths for accurate side rectangles
-5. **Generate** (`src/net.mjs`): Create net layout (base, mirror, side rects) with rotation and alignment
-6. **Render** (`src/render.mjs`): Output grouped SVG with tabs and fold lines
+4. **Compute** (`src/path-segments.mjs`): Calculate segment lengths for all path commands using `svg-path-properties` (arcs and Bézier curves) or direct calculation (lines)
+5. **Generate** (`src/net.mjs`): Create net layout (base, mirror, side rects) with rotation and alignment, preserving segment types (`line`/`arc`/`curve`)
+6. **Render** (`src/render.mjs`): Output grouped SVG with tabs (saw-tooth for curved segments) and fold lines
