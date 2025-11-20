@@ -38,6 +38,8 @@
 
 - Install with `npm install`; run via `npm start` or `node bin/shape-2-flat.js --help`. Package exposes a binary (`npx shape-2-flat`) once published.
 - Required flags: either `--input` or `--path`; optional `--scale` multiplies coordinates before layout, `--tolerance` controls sampling step, `--min-segment` merges small edges, `--margin` sets pre-centering offset.
+- `--debug` emits the `DEBUG` group (fitted arc/curve centers & circles) for visual diagnostics; default off.
+- `--height` is a deprecated alias for `--depth` (prefer `--depth`; scheduled removal).
 - CLI dynamically imports ESM core, so stay compatible with Node ≥16 and avoid top-level ESM-only Node APIs in CommonJS entry.
 - Default output is `assets/net.svg`; CLI prints perimeter with `unit` suffix. No automated tests—use sample commands in README for regression checks.
 

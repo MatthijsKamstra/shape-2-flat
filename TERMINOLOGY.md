@@ -76,9 +76,10 @@ All SVG path commands are fully supported:
 
 ## Star Tab Spike Heuristic
 
-`spikes = clamp(12, 48, round(perimeter / 8))`
+`spikes = clamp(12,48, round(perimeter / 8))`
 
 - Perimeter for ellipse via Ramanujan approximation; arcs use segment length proportion; curves use fitted circle circumference
+- Ensures ≈1 spike per 8 units while clamping to avoid undersampling (<12) or oversampling (>48)
 
 ## Fitted Centers
 

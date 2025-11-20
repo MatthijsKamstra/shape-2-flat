@@ -22,7 +22,7 @@ Convert an SVG path or primitive into a printable A4 SVG net (unfolded layout) o
   - Arc segments & circle/ellipse primitives: single star perimeter tab (12–48 spikes) using true arc/ellipse center
   - Bézier curves (C/Q/S/T): star tabs via circle fit (circumcenter of start / midpoint sample / end)
   - Curved vertical seams use saw-tooth triangles; straight seams use 45° miters.
-- Perimeter & spike count heuristic: spikes ≈ perimeter / 8, clamped to [12,48].
+- Spike count heuristic: `spikes = clamp(12,48, round(perimeter / 8))` (ellipse perimeter via Ramanujan; curves fitted circle; arcs segment length proportion)
 
 ## Quick start
 
@@ -32,7 +32,7 @@ Examples:
 
 ```sh
 # Using a path string (rectangle 100x50), depth 30mm, output to assets/net.svg
-npx shape-2-flat --path "M0,0 L100,0 L100,50 L0,50 Z" --depth 30 --unit mm --output assets/net.svg
+npx shape-2-flat --path "M0,0 L100,0 L100,50 L0,50 Z" --depth 30 --unit mm --debug --output assets/net.svg
 
 # Using an SVG file as input
 npx shape-2-flat --input assets/rounded.svg --depth 40 --tolerance 0.5 --output assets/net.svg
@@ -56,6 +56,8 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 - --margin, -m: Page margin in output (default 10) [some layouts use 0 to connect parts]
 - --output, -o: Output SVG path (default assets/net.svg)
 - --unit, -u: Output dimension unit (px, mm) default mm
+- --debug: Emit DEBUG group (fitted centers/circles for arcs & curves) (default false)
+- --height: Deprecated alias for `--depth` (will be removed; prefer `--depth`)
 
 ## Notes and limitations
 
