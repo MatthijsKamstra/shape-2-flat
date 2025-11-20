@@ -143,7 +143,7 @@ function computeSegmentLengthsFromPath(d) {
 				if (isRel) { x += curX; y += curY; }
 				const len = Math.hypot(x - curX, y - curY);
 				const angle = Math.atan2(y - curY, x - curX);
-				segs.push({ type: 'line', length: len, angle });
+				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: x, y2: y });
 				lastControlX = null; lastControlY = null;
 				curX = x; curY = y;
 			}
@@ -157,7 +157,7 @@ function computeSegmentLengthsFromPath(d) {
 				let x = n1.value; if (isRel) x += curX;
 				const len = Math.abs(x - curX);
 				const angle = x > curX ? 0 : Math.PI; // horizontal: 0° right, 180° left
-				segs.push({ type: 'line', length: len, angle });
+				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: x, y2: curY });
 				lastControlX = null; lastControlY = null;
 				curX = x;
 			}
@@ -171,7 +171,7 @@ function computeSegmentLengthsFromPath(d) {
 				let y = n1.value; if (isRel) y += curY;
 				const len = Math.abs(y - curY);
 				const angle = y > curY ? Math.PI / 2 : -Math.PI / 2; // vertical: 90° down, -90° up
-				segs.push({ type: 'line', length: len, angle });
+				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: curX, y2: y });
 				lastControlX = null; lastControlY = null;
 				curY = y;
 			}
@@ -298,7 +298,7 @@ function computeSegmentLengthsFromPath(d) {
 			const len = Math.hypot(subX - curX, subY - curY);
 			if (len > 0) {
 				const angle = Math.atan2(subY - curY, subX - curX);
-				segs.push({ type: 'line', length: len, angle });
+				segs.push({ type: 'line', length: len, angle, x1: curX, y1: curY, x2: subX, y2: subY });
 			}
 			lastControlX = null; lastControlY = null;
 			curX = subX; curY = subY;
