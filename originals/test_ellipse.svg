@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="100" viewBox="0 0 140 100">
+  <!-- Ellipse to test star-pattern tabs with different radii -->
+  <ellipse cx="70" cy="50" rx="60" ry="40" fill="none" stroke="black"/>
+</svg>

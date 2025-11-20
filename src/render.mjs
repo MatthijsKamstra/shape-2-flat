@@ -235,10 +235,11 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const stackRight = stackedC[0].x + stackedC[0].w;
 
 	// Helper function to add tabs along a polygon edge
-	function addShapeEdgeTabs(points, isBase) {
+	function addShapeEdgeTabs(points, isBase, segmentTypes = []) {
 		for (let i = 0; i < points.length; i++) {
 			const [x1, y1] = points[i];
 			const [x2, y2] = points[(i + 1) % points.length];
+			const segType = segmentTypes[i] || 'line';
 
 			// Calculate edge direction and normal
 			const dx = x2 - x1;
@@ -246,28 +247,84 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const len = Math.hypot(dx, dy);
 			if (len < 1e-6) continue;
 
-			// Unit tangent and normal (outward)
-			const tx = dx / len;
-			const ty = dy / len;
-			const nx = -ty;  // perpendicular to tangent (rotated 90° clockwise)
-			const ny = tx;
+			// For arc/curve edges, use star pattern similar to circles
+			if (segType === 'arc' || segType === 'curve') {
+				// Calculate number of spikes based on arc length
+				const numSpikes = Math.max(4, Math.min(16, Math.round(len / 8)));
+				
+				// Unit tangent and normal (outward)
+				const tx = dx / len;
+				const ty = dy / len;
+				const nx = -ty;
+				const ny = tx;
+				
+				// Create star pattern along the edge - alternating inner and outer points
+				const pathParts = [];
+				const foldParts = [];
+				
+				for (let j = 0; j < numSpikes * 2; j++) {
+					const t = j / (numSpikes * 2);
+					const isOuter = j % 2 === 1;
+					
+					// Point along the edge (linear interpolation)
+					const edgeX = x1 + dx * t;
+					const edgeY = y1 + dy * t;
+					
+					let x, y;
+					if (isOuter) {
+						// Outer point (spike tip) - extend perpendicular by tabW
+						x = edgeX + nx * tabW;
+						y = edgeY + ny * tabW;
+					} else {
+						// Inner point (on edge)
+						x = edgeX;
+						y = edgeY;
+					}
+					
+					if (j === 0) {
+						pathParts.push(`M ${x},${y}`);
+					} else {
+						pathParts.push(`L ${x},${y}`);
+					}
+					
+					// Add fold lines between inner (perimeter) points only
+					if (!isOuter && j > 0) {
+						const prevT = (j - 2) / (numSpikes * 2);
+						const prevX = x1 + dx * prevT;
+						const prevY = y1 + dy * prevT;
+						foldParts.push(`<path d="M ${prevX},${prevY} L ${x},${y}" ${foldStyle}/>`);
+					}
+				}
+				
+				pathParts.push('Z');
+				glueShapeParts.push(`<path d="${pathParts.join(' ')}" ${tabStyle}/>`);
+				foldShapeParts.push(...foldParts);
+				
+			} else {
+				// Straight edge: use trapezoid tabs
+				// Unit tangent and normal (outward)
+				const tx = dx / len;
+				const ty = dy / len;
+				const nx = -ty;
+				const ny = tx;
 
-			// Add fold line along the edge
-			foldShapeParts.push(`<path d="M ${x1},${y1} L ${x2},${y2}" ${foldStyle}/>`);
+				// Add fold line along the edge
+				foldShapeParts.push(`<path d="M ${x1},${y1} L ${x2},${y2}" ${foldStyle}/>`);
 
-			// Taper distance from edge endpoints (for trapezoid shape)
-			const taper = Math.min(tabW, len / 2);
+				// Taper distance from edge endpoints (for trapezoid shape)
+				const taper = Math.min(tabW, len / 2);
 
-			// Create tabs on both sides of the edge, perpendicular to the edge direction
-			// Tab extends perpendicular using normal vector (nx, ny)
+				// Create tabs on both sides of the edge, perpendicular to the edge direction
+				// Tab extends perpendicular using normal vector (nx, ny)
 
-			// Tab 1: extends in positive normal direction
-			const d1 = `M ${x1},${y1} L ${x1 + tx * taper + nx * tabW},${y1 + ty * taper + ny * tabW} L ${x2 - tx * taper + nx * tabW},${y2 - ty * taper + ny * tabW} L ${x2},${y2} Z`;
-			glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
+				// Tab 1: extends in positive normal direction
+				const d1 = `M ${x1},${y1} L ${x1 + tx * taper + nx * tabW},${y1 + ty * taper + ny * tabW} L ${x2 - tx * taper + nx * tabW},${y2 - ty * taper + ny * tabW} L ${x2},${y2} Z`;
+				glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
 
-			// Tab 2: extends in negative normal direction
-			const d2 = `M ${x1},${y1} L ${x1 + tx * taper - nx * tabW},${y1 + ty * taper - ny * tabW} L ${x2 - tx * taper - nx * tabW},${y2 - ty * taper - ny * tabW} L ${x2},${y2} Z`;
-			glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
+				// Tab 2: extends in negative normal direction
+				const d2 = `M ${x1},${y1} L ${x1 + tx * taper - nx * tabW},${y1 + ty * taper - ny * tabW} L ${x2 - tx * taper - nx * tabW},${y2 - ty * taper - ny * tabW} L ${x2},${y2} Z`;
+				glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
+			}
 		}
 	}
 
@@ -340,8 +397,10 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 		}
 	} else {
 		// Polygon edge tabs for non-circular shapes
-		addShapeEdgeTabs(baseC, true);
-		addShapeEdgeTabs(mirrorC, false);
+		// Extract segment types from stackedC
+		const segmentTypes = stackedC.map(r => r.type || 'line');
+		addShapeEdgeTabs(baseC, true, segmentTypes);
+		addShapeEdgeTabs(mirrorC, false, segmentTypes);
 	}
 
 	// Info text: circumference/perimeter equals total side strip length

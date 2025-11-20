@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="100" viewBox="0 0 120 100">
+  <!-- Hexagon to test angled edge tabs -->
+  <polygon points="60,10 100,35 100,75 60,100 20,75 20,35" fill="none" stroke="black"/>
+</svg>
