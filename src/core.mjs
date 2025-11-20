@@ -38,22 +38,6 @@ function generateNet(opts = {}) {
 	if (!d) throw new Error("No SVG path data found");
 
 	let polyRaw = extractLinearPolygon(d);
-	
-	// Detect if this is actually a rectangle (4 points forming right angles)
-	if (polyRaw && polyRaw.length === 4 && info.kind === "path") {
-		const isRect = polyRaw.every((p, i) => {
-			const prev = polyRaw[(i + 3) % 4];
-			const next = polyRaw[(i + 1) % 4];
-			const dx1 = p[0] - prev[0], dy1 = p[1] - prev[1];
-			const dx2 = next[0] - p[0], dy2 = next[1] - p[1];
-			// Check if edges are perpendicular (dot product ~0)
-			const dot = dx1 * dx2 + dy1 * dy2;
-			return Math.abs(dot) < 1e-6;
-		});
-		if (isRect) {
-			info.kind = "rect";
-		}
-	}
 	if (polyRaw) {
 		if (scale !== 1) polyRaw = polyRaw.map(([x, y]) => [x * scale, y * scale]);
 	} else {

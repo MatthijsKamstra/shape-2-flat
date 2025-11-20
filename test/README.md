@@ -145,3 +145,133 @@ The test file includes a minimal test framework implementation with:
 - `it()` - Individual test cases
 - `assertClose()` - Helper for floating-point comparisons with tolerance
 - Automatic test runner with summary reporting
+
+---
+
+## Shape Glue Tabs Tests
+
+The `shape-glue-tabs.test.mjs` file contains comprehensive tests for the shape glue tab functionality added to base and mirror shapes.
+
+### Running Tests
+
+```bash
+npm run test:tabs
+# or
+node test/shape-glue-tabs.test.mjs
+```
+
+### Test Coverage
+
+The test suite covers all aspects of the shape glue tabs feature:
+
+#### 1. **Shape Glue Tabs - Rectangle** - 8 tests
+
+- Glue tabs for all 4 sides of rectangle base (16 tabs total: 8 per shape)
+- Glue tabs on both sides of each edge (bilateral tabs)
+- Fold lines for all 4 sides (8 fold lines total)
+- 7mm tab height for horizontal edges
+- GLUE_SHAPE group creation
+- FOLDING_SHAPE group creation
+- Separate GLUE_SIDE for side rectangles
+- Separate FOLDING_SIDE for side rectangles
+
+#### 2. **Shape Glue Tabs - Hexagon** - 2 tests
+
+- Glue tabs for all 6 sides of hexagon (20+ tabs)
+- Proper handling of angled edges
+
+#### 3. **Shape Glue Tabs - Triangle** - 1 test
+
+- Glue tabs for all 3 sides of triangle (8+ tabs)
+
+#### 4. **Shape Types Preservation** - 5 tests
+
+- Rect elements preserved as `<rect>` when from SVG rect
+- Circle elements preserved as `<circle>`
+- Ellipse elements preserved as `<ellipse>`
+- Path elements kept as `<path>`
+- Polygon elements preserved with original path data
+
+#### 5. **Circle/Ellipse - No Shape Glue Tabs** - 3 tests
+
+- Circles don't generate GLUE_SHAPE tabs (primitives, not polygons)
+- Ellipses don't generate GLUE_SHAPE tabs
+- Circles still generate GLUE_SIDE tabs for side panels
+
+#### 6. **Tab Dimensions** - 3 tests
+
+- Tabs have correct trapezoid shape (4-vertex paths)
+- Tabs have gray fill color (#e5e5e5)
+- Fold lines have dashed white stroke
+
+#### 7. **Group Structure** - 3 tests
+
+- All required groups present (GLUE_SIDE, GLUE_SHAPE, SHAPE, FOLDING_SIDE, FOLDING_SHAPE, CUT_LINES, DESIGN, INFO, BG)
+- Side tabs separated from shape tabs
+- Side fold lines separated from shape fold lines
+
+### Key Features Tested
+
+**Glue Tab Implementation:**
+- Full-length tabs along each edge
+- Bilateral tabs (one on each side of fold line)
+- 7mm tab width/height
+- Trapezoid shape with tapered ends
+- Gray fill (#e5e5e5) without stroke
+
+**Fold Line Implementation:**
+- White dashed lines along edges
+- Separate groups for sides vs. shapes
+- `stroke-dasharray` for dashed appearance
+
+**Group Separation:**
+- `GLUE_SIDE`: Tabs for side panel rectangles
+- `GLUE_SHAPE`: Tabs for base and mirror shape edges
+- `FOLDING_SIDE`: Fold lines for side panel edges
+- `FOLDING_SHAPE`: Fold lines for base and mirror shape edges
+
+**Shape Type Preservation:**
+- Rect elements stay as `<rect>` (not converted to path)
+- Circle/ellipse stay as primitives
+- Path elements preserved with transforms
+- Polygon/polyline converted to path but data preserved
+
+### Total Coverage
+
+**25 tests** covering:
+
+- Rectangular, hexagonal, and triangular shapes
+- Tab generation for all polygon edges
+- Bilateral tab placement
+- Tab dimensions and styling
+- Shape type preservation
+- Group structure and separation
+- Circle/ellipse special handling
+- Integration with existing side panel tabs
+
+### Test Framework
+
+Uses the same minimal test framework as path-segments tests:
+
+- `describe()` - Groups related tests
+- `it()` - Individual test cases
+- `countMatches()` - Helper to count regex matches in SVG
+- `extractGroup()` - Helper to extract SVG group content
+
+---
+
+## Running All Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:segments
+npm run test:tabs
+
+# Run with shell script
+bash test/run-tests.sh
+```
+
+```
