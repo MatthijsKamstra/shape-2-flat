@@ -602,32 +602,49 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 			// Handle CURVE segments - fit a circle to the curve
 			if (seg.type === 'curve' && seg.x1 !== undefined) {
-				// Fit a circle using the endpoints and control points
-				// For quadratic curves: use control point as circle center approximation
-				// For cubic curves: use midpoint of control points
-				let cx0, cy0, r0;
+				// Fit a circle using three points on the curve: start, midpoint, end
+				// Sample the midpoint of the Bézier curve at t=0.5
+				let midX, midY;
 
 				if (seg.isQuadratic && seg.cx1 !== undefined) {
-					// Quadratic: control point is approximately the circle center
-					cx0 = seg.cx1;
-					cy0 = seg.cy1;
-					// Radius is average distance to endpoints
-					const d1 = Math.hypot(cx0 - seg.x1, cy0 - seg.y1);
-					const d2 = Math.hypot(cx0 - seg.x2, cy0 - seg.y2);
-					r0 = (d1 + d2) / 2;
+					// Quadratic Bézier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+					// At t=0.5: B(0.5) = 0.25*P0 + 0.5*P1 + 0.25*P2
+					midX = 0.25 * seg.x1 + 0.5 * seg.cx1 + 0.25 * seg.x2;
+					midY = 0.25 * seg.y1 + 0.5 * seg.cy1 + 0.25 * seg.y2;
 				} else if (seg.cx1 !== undefined && seg.cx2 !== undefined) {
-					// Cubic: use midpoint of two control points as center approximation
-					cx0 = (seg.cx1 + seg.cx2) / 2;
-					cy0 = (seg.cy1 + seg.cy2) / 2;
-					// Radius is average distance to endpoints
-					const d1 = Math.hypot(cx0 - seg.x1, cy0 - seg.y1);
-					const d2 = Math.hypot(cx0 - seg.x2, cy0 - seg.y2);
-					r0 = (d1 + d2) / 2;
+					// Cubic Bézier: B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
+					// At t=0.5: B(0.5) = 0.125*P0 + 0.375*P1 + 0.375*P2 + 0.125*P3
+					midX = 0.125 * seg.x1 + 0.375 * seg.cx1 + 0.375 * seg.cx2 + 0.125 * seg.x2;
+					midY = 0.125 * seg.y1 + 0.375 * seg.cy1 + 0.375 * seg.cy2 + 0.125 * seg.y2;
 				} else {
-					// Fallback: use midpoint of endpoints
+					// Fallback: simple midpoint
+					midX = (seg.x1 + seg.x2) / 2;
+					midY = (seg.y1 + seg.y2) / 2;
+				}
+
+				// Fit circle through three points: (x1,y1), (midX,midY), (x2,y2)
+				// Using circumcenter formula
+				const p1x = seg.x1, p1y = seg.y1;
+				const p2x = midX, p2y = midY;
+				const p3x = seg.x2, p3y = seg.y2;
+
+				const d = 2 * (p1x * (p2y - p3y) + p2x * (p3y - p1y) + p3x * (p1y - p2y));
+				let cx0, cy0, r0;
+
+				if (Math.abs(d) < 1e-6) {
+					// Points are collinear, use midpoint fallback
 					cx0 = (seg.x1 + seg.x2) / 2;
 					cy0 = (seg.y1 + seg.y2) / 2;
 					r0 = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / 2;
+				} else {
+					// Calculate circumcenter
+					const p1Sq = p1x * p1x + p1y * p1y;
+					const p2Sq = p2x * p2x + p2y * p2y;
+					const p3Sq = p3x * p3x + p3y * p3y;
+
+					cx0 = (p1Sq * (p2y - p3y) + p2Sq * (p3y - p1y) + p3Sq * (p1y - p2y)) / d;
+					cy0 = (p1Sq * (p3x - p2x) + p2Sq * (p1x - p3x) + p3Sq * (p2x - p1x)) / d;
+					r0 = Math.hypot(cx0 - p1x, cy0 - p1y);
 				}
 
 				// Transform for BASE shape
