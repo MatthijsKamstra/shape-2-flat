@@ -1,4 +1,5 @@
 "use strict";
+import { calculateArcCenter, fitCurveCircle } from './geometry.mjs';
 
 function bboxOfPoints(points) {
 	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -27,7 +28,7 @@ function dashedLine(x1, y1, x2, y2) {
 	return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#00a" stroke-width="0.5" stroke-dasharray="4,3"/>`;
 }
 
-function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scale = 1 } = {}) {
+function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scale = 1, debug = true } = {}) {
 	const gap = 0; // connect parts without gaps
 	// Arrange: base (left), side stack (center), mirrored base (right)
 	// vertical stack height
@@ -429,45 +430,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const info = infoLines.join('\n');
 
-	// Helper function to calculate arc center from SVG arc parameters
-	function calculateArcCenter(x1, y1, x2, y2, rx, ry, xRot, largeArc, sweep) {
-		// Convert rotation angle to radians
-		const phi = (xRot * Math.PI) / 180;
-		const cosPhi = Math.cos(phi);
-		const sinPhi = Math.sin(phi);
-
-		// Compute half-distance between endpoints
-		const dx = (x1 - x2) / 2;
-		const dy = (y1 - y2) / 2;
-
-		// Rotate to align with ellipse axes
-		const x1Prime = cosPhi * dx + sinPhi * dy;
-		const y1Prime = -sinPhi * dx + cosPhi * dy;
-
-		// Correct radii if needed
-		const lambda = (x1Prime * x1Prime) / (rx * rx) + (y1Prime * y1Prime) / (ry * ry);
-		if (lambda > 1) {
-			rx *= Math.sqrt(lambda);
-			ry *= Math.sqrt(lambda);
-		}
-
-		// Calculate center in rotated coordinates
-		const sign = largeArc !== sweep ? 1 : -1;
-		const sq = Math.max(0, (rx * rx * ry * ry - rx * rx * y1Prime * y1Prime - ry * ry * x1Prime * x1Prime) /
-			(rx * rx * y1Prime * y1Prime + ry * ry * x1Prime * x1Prime));
-		const coef = sign * Math.sqrt(sq);
-		const cxPrime = coef * (rx * y1Prime) / ry;
-		const cyPrime = -coef * (ry * x1Prime) / rx;
-
-		// Rotate back and translate
-		const cx = cosPhi * cxPrime - sinPhi * cyPrime + (x1 + x2) / 2;
-		const cy = sinPhi * cxPrime + cosPhi * cyPrime + (y1 + y2) / 2;
-
-		return { cx, cy };
-	}
-
-	// Generate star-pattern glue tabs for arc segments on base and mirror shapes
-	const debugParts = [];
+	// Generate star-pattern glue tabs for arc/curve segments (debug optional)
+	const debugParts = debug ? [] : null;
 
 	// Helper function to generate star pattern tabs at a specific position
 	function addArcStarTabs(cx, cy, rx, ry, numSpikes) {
@@ -558,11 +522,13 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 				// Generate star tabs for base
 				addArcStarTabs(bx, by, baseRx, baseRy, numSpikes);
 
-				// Debug circle for base
-				const avgR = (baseRx + baseRy) / 2;
-				debugParts.push(`<circle cx="${bx}" cy="${by}" r="${avgR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
-				debugParts.push(`<circle cx="${bx}" cy="${by}" r="1" fill="red"/>`);
-				debugParts.push(`<ellipse cx="${bx}" cy="${by}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="orange" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+				// Debug circles (optional)
+				if (debugParts) {
+					const avgR = (baseRx + baseRy) / 2;
+					debugParts.push(`<circle cx="${bx}" cy="${by}" r="${avgR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+					debugParts.push(`<circle cx="${bx}" cy="${by}" r="1" fill="red"/>`);
+					debugParts.push(`<ellipse cx="${bx}" cy="${by}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="orange" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+				}
 
 
 				// Transform for MIRROR shape
@@ -594,58 +560,20 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 				// Generate star tabs for mirror
 				addArcStarTabs(mx, my, baseRx, baseRy, numSpikes);
 
-				// Debug circle for mirror
-				debugParts.push(`<circle cx="${mx}" cy="${my}" r="${avgR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
-				debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
-				debugParts.push(`<ellipse cx="${mx}" cy="${my}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="cyan" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+				// Debug mirror
+				if (debugParts) {
+					const avgR = (baseRx + baseRy) / 2;
+					debugParts.push(`<circle cx="${mx}" cy="${my}" r="${avgR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+					debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
+					debugParts.push(`<ellipse cx="${mx}" cy="${my}" rx="${baseRx}" ry="${baseRy}" fill="none" stroke="cyan" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+				}
 			}
 
-			// Handle CURVE segments - fit a circle to the curve
+			// Handle CURVE segments using geometry helper fitCurveCircle
 			if (seg.type === 'curve' && seg.x1 !== undefined) {
-				// Fit a circle using three points on the curve: start, midpoint, end
-				// Sample the midpoint of the Bézier curve at t=0.5
-				let midX, midY;
-
-				if (seg.isQuadratic && seg.cx1 !== undefined) {
-					// Quadratic Bézier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
-					// At t=0.5: B(0.5) = 0.25*P0 + 0.5*P1 + 0.25*P2
-					midX = 0.25 * seg.x1 + 0.5 * seg.cx1 + 0.25 * seg.x2;
-					midY = 0.25 * seg.y1 + 0.5 * seg.cy1 + 0.25 * seg.y2;
-				} else if (seg.cx1 !== undefined && seg.cx2 !== undefined) {
-					// Cubic Bézier: B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
-					// At t=0.5: B(0.5) = 0.125*P0 + 0.375*P1 + 0.375*P2 + 0.125*P3
-					midX = 0.125 * seg.x1 + 0.375 * seg.cx1 + 0.375 * seg.cx2 + 0.125 * seg.x2;
-					midY = 0.125 * seg.y1 + 0.375 * seg.cy1 + 0.375 * seg.cy2 + 0.125 * seg.y2;
-				} else {
-					// Fallback: simple midpoint
-					midX = (seg.x1 + seg.x2) / 2;
-					midY = (seg.y1 + seg.y2) / 2;
-				}
-
-				// Fit circle through three points: (x1,y1), (midX,midY), (x2,y2)
-				// Using circumcenter formula
-				const p1x = seg.x1, p1y = seg.y1;
-				const p2x = midX, p2y = midY;
-				const p3x = seg.x2, p3y = seg.y2;
-
-				const d = 2 * (p1x * (p2y - p3y) + p2x * (p3y - p1y) + p3x * (p1y - p2y));
-				let cx0, cy0, r0;
-
-				if (Math.abs(d) < 1e-6) {
-					// Points are collinear, use midpoint fallback
-					cx0 = (seg.x1 + seg.x2) / 2;
-					cy0 = (seg.y1 + seg.y2) / 2;
-					r0 = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / 2;
-				} else {
-					// Calculate circumcenter
-					const p1Sq = p1x * p1x + p1y * p1y;
-					const p2Sq = p2x * p2x + p2y * p2y;
-					const p3Sq = p3x * p3x + p3y * p3y;
-
-					cx0 = (p1Sq * (p2y - p3y) + p2Sq * (p3y - p1y) + p3Sq * (p1y - p2y)) / d;
-					cy0 = (p1Sq * (p3x - p2x) + p2Sq * (p1x - p3x) + p3Sq * (p2x - p1x)) / d;
-					r0 = Math.hypot(cx0 - p1x, cy0 - p1y);
-				}
+				const fit = fitCurveCircle(seg);
+				if (!fit) continue;
+				let { cx: cx0, cy: cy0, r: r0 } = fit;
 
 				// Transform for BASE shape
 				let bx = cx0 * scale;
@@ -668,9 +596,10 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 				// Generate star tabs for base
 				addArcStarTabs(bx, by, baseR, baseR, numSpikes);
 
-				// Debug circle for base
-				debugParts.push(`<circle cx="${bx}" cy="${by}" r="${baseR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
-				debugParts.push(`<circle cx="${bx}" cy="${by}" r="1" fill="red"/>`);
+				if (debugParts) {
+					debugParts.push(`<circle cx="${bx}" cy="${by}" r="${baseR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+					debugParts.push(`<circle cx="${bx}" cy="${by}" r="1" fill="red"/>`);
+				}
 
 				// Transform for MIRROR shape
 				let mx = cx0 * scale;
@@ -693,107 +622,110 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 				// Generate star tabs for mirror
 				addArcStarTabs(mx, my, baseR, baseR, numSpikes);
 
-				// Debug circle for mirror
-				debugParts.push(`<circle cx="${mx}" cy="${my}" r="${baseR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
-				debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
+				if (debugParts) {
+					debugParts.push(`<circle cx="${mx}" cy="${my}" r="${baseR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+					debugParts.push(`<circle cx="${mx}" cy="${my}" r="1" fill="blue"/>`);
+				}
 			}
 		}
 
-		// Generate tabs for straight line segments using their stored endpoints
-		for (const seg of stackedC) {
-			if (seg.type !== 'line' || !seg.x1) continue; // Skip if not a line or no endpoint data
+		// Generate tabs for straight line segments only when shape has arcs/curves (polygon path skipped)
+		if (originalShape?.hasArcs) {
+			for (const seg of stackedC) {
+				if (seg.type !== 'line' || !seg.x1) continue;
 
-			// BASE shape - transform and generate tabs
-			let bx1 = seg.x1 * scale;
-			let by1 = seg.y1 * scale;
-			let bx2 = seg.x2 * scale;
-			let by2 = seg.y2 * scale;
+				// BASE shape - transform and generate tabs
+				let bx1 = seg.x1 * scale;
+				let by1 = seg.y1 * scale;
+				let bx2 = seg.x2 * scale;
+				let by2 = seg.y2 * scale;
 
-			// Apply rotation
-			let d1x = bx1 - c0x, d1y = by1 - c0y;
-			bx1 = c0x + d1x * cosR - d1y * sinR;
-			by1 = c0y + d1x * sinR + d1y * cosR;
+				// Apply rotation
+				let d1x = bx1 - c0x, d1y = by1 - c0y;
+				bx1 = c0x + d1x * cosR - d1y * sinR;
+				by1 = c0y + d1x * sinR + d1y * cosR;
 
-			let d2x = bx2 - c0x, d2y = by2 - c0y;
-			bx2 = c0x + d2x * cosR - d2y * sinR;
-			by2 = c0y + d2x * sinR + d2y * cosR;
+				let d2x = bx2 - c0x, d2y = by2 - c0y;
+				bx2 = c0x + d2x * cosR - d2y * sinR;
+				by2 = c0y + d2x * sinR + d2y * cosR;
 
-			// Apply translation
-			bx1 += dx + baseOffsetX + deltaBaseX;
-			by1 += dy + baseOffsetY;
-			bx2 += dx + baseOffsetX + deltaBaseX;
-			by2 += dy + baseOffsetY;
+				// Apply translation
+				bx1 += dx + baseOffsetX + deltaBaseX;
+				by1 += dy + baseOffsetY;
+				bx2 += dx + baseOffsetX + deltaBaseX;
+				by2 += dy + baseOffsetY;
 
-			// Generate trapezoid tabs
-			const edgeVx = bx2 - bx1;
-			const edgeVy = by2 - by1;
-			const edgeLen = Math.sqrt(edgeVx * edgeVx + edgeVy * edgeVy);
-			if (edgeLen < 1e-6) continue;
+				// Generate trapezoid tabs
+				const edgeVx = bx2 - bx1;
+				const edgeVy = by2 - by1;
+				const edgeLen = Math.sqrt(edgeVx * edgeVx + edgeVy * edgeVy);
+				if (edgeLen < 1e-6) continue;
 
-			const edgeTx = edgeVx / edgeLen;
-			const edgeTy = edgeVy / edgeLen;
-			const edgeNx = -edgeTy;
-			const edgeNy = edgeTx;
-			const taper = Math.min(tabW, edgeLen / 2);
+				const edgeTx = edgeVx / edgeLen;
+				const edgeTy = edgeVy / edgeLen;
+				const edgeNx = -edgeTy;
+				const edgeNy = edgeTx;
+				const taper = Math.min(tabW, edgeLen / 2);
 
-			// Tab 1: positive normal direction
-			const d1 = `M ${bx1},${by1} L ${bx1 + edgeTx * taper + edgeNx * tabW},${by1 + edgeTy * taper + edgeNy * tabW} L ${bx2 - edgeTx * taper + edgeNx * tabW},${by2 - edgeTy * taper + edgeNy * tabW} L ${bx2},${by2} Z`;
-			glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
-			foldShapeParts.push(`<path d="M ${bx1},${by1} L ${bx2},${by2}" ${foldStyle}/>`);
+				// Tab 1: positive normal direction
+				const d1 = `M ${bx1},${by1} L ${bx1 + edgeTx * taper + edgeNx * tabW},${by1 + edgeTy * taper + edgeNy * tabW} L ${bx2 - edgeTx * taper + edgeNx * tabW},${by2 - edgeTy * taper + edgeNy * tabW} L ${bx2},${by2} Z`;
+				glueShapeParts.push(`<path d="${d1}" ${tabStyle}/>`);
+				foldShapeParts.push(`<path d="M ${bx1},${by1} L ${bx2},${by2}" ${foldStyle}/>`);
 
-			// Tab 2: negative normal direction
-			const d2 = `M ${bx1},${by1} L ${bx1 + edgeTx * taper - edgeNx * tabW},${by1 + edgeTy * taper - edgeNy * tabW} L ${bx2 - edgeTx * taper - edgeNx * tabW},${by2 - edgeTy * taper - edgeNy * tabW} L ${bx2},${by2} Z`;
-			glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
+				// Tab 2: negative normal direction
+				const d2 = `M ${bx1},${by1} L ${bx1 + edgeTx * taper - edgeNx * tabW},${by1 + edgeTy * taper - edgeNy * tabW} L ${bx2 - edgeTx * taper - edgeNx * tabW},${by2 - edgeTy * taper - edgeNy * tabW} L ${bx2},${by2} Z`;
+				glueShapeParts.push(`<path d="${d2}" ${tabStyle}/>`);
 
-			// MIRROR shape - transform and generate tabs
-			let mx1 = seg.x1 * scale;
-			let my1 = seg.y1 * scale;
-			let mx2 = seg.x2 * scale;
-			let my2 = seg.y2 * scale;
+				// MIRROR shape - transform and generate tabs
+				let mx1 = seg.x1 * scale;
+				let my1 = seg.y1 * scale;
+				let mx2 = seg.x2 * scale;
+				let my2 = seg.y2 * scale;
 
-			// Apply rotation
-			let dm1x = mx1 - c0x, dm1y = my1 - c0y;
-			mx1 = c0x + dm1x * cosR - dm1y * sinR;
-			my1 = c0y + dm1x * sinR + dm1y * cosR;
+				// Apply rotation
+				let dm1x = mx1 - c0x, dm1y = my1 - c0y;
+				mx1 = c0x + dm1x * cosR - dm1y * sinR;
+				my1 = c0y + dm1x * sinR + dm1y * cosR;
 
-			let dm2x = mx2 - c0x, dm2y = my2 - c0y;
-			mx2 = c0x + dm2x * cosR - dm2y * sinR;
-			my2 = c0y + dm2x * sinR + dm2y * cosR;
+				let dm2x = mx2 - c0x, dm2y = my2 - c0y;
+				mx2 = c0x + dm2x * cosR - dm2y * sinR;
+				my2 = c0y + dm2x * sinR + dm2y * cosR;
 
-			// Apply mirror transform
-			mx1 -= cBx; my1 -= cBy;
-			mx2 -= cBx; my2 -= cBy;
-			mx1 = -mx1;
-			mx2 = -mx2;
-			mx1 += cBx; my1 += cBy;
-			mx2 += cBx; my2 += cBy;
+				// Apply mirror transform
+				mx1 -= cBx; my1 -= cBy;
+				mx2 -= cBx; my2 -= cBy;
+				mx1 = -mx1;
+				mx2 = -mx2;
+				mx1 += cBx; my1 += cBy;
+				mx2 += cBx; my2 += cBy;
 
-			// Apply translation
-			mx1 += mirrorOffsetX + deltaMirrorX + dx;
-			my1 += mirrorOffsetY + dy;
-			mx2 += mirrorOffsetX + deltaMirrorX + dx;
-			my2 += mirrorOffsetY + dy;
+				// Apply translation
+				mx1 += mirrorOffsetX + deltaMirrorX + dx;
+				my1 += mirrorOffsetY + dy;
+				mx2 += mirrorOffsetX + deltaMirrorX + dx;
+				my2 += mirrorOffsetY + dy;
 
-			// Generate trapezoid tabs for mirror
-			const mEdgeVx = mx2 - mx1;
-			const mEdgeVy = my2 - my1;
-			const mEdgeLen = Math.sqrt(mEdgeVx * mEdgeVx + mEdgeVy * mEdgeVy);
-			if (mEdgeLen < 1e-6) continue;
+				// Generate trapezoid tabs for mirror
+				const mEdgeVx = mx2 - mx1;
+				const mEdgeVy = my2 - my1;
+				const mEdgeLen = Math.sqrt(mEdgeVx * mEdgeVx + mEdgeVy * mEdgeVy);
+				if (mEdgeLen < 1e-6) continue;
 
-			const mEdgeTx = mEdgeVx / mEdgeLen;
-			const mEdgeTy = mEdgeVy / mEdgeLen;
-			const mEdgeNx = -mEdgeTy;
-			const mEdgeNy = mEdgeTx;
-			const mTaper = Math.min(tabW, mEdgeLen / 2);
+				const mEdgeTx = mEdgeVx / mEdgeLen;
+				const mEdgeTy = mEdgeVy / mEdgeLen;
+				const mEdgeNx = -mEdgeTy;
+				const mEdgeNy = mEdgeTx;
+				const mTaper = Math.min(tabW, mEdgeLen / 2);
 
-			// Tab 1: positive normal direction
-			const md1 = `M ${mx1},${my1} L ${mx1 + mEdgeTx * mTaper + mEdgeNx * tabW},${my1 + mEdgeTy * mTaper + mEdgeNy * tabW} L ${mx2 - mEdgeTx * mTaper + mEdgeNx * tabW},${my2 - mEdgeTy * mTaper + mEdgeNy * tabW} L ${mx2},${my2} Z`;
-			glueShapeParts.push(`<path d="${md1}" ${tabStyle}/>`);
-			foldShapeParts.push(`<path d="M ${mx1},${my1} L ${mx2},${my2}" ${foldStyle}/>`);
+				// Tab 1: positive normal direction
+				const md1 = `M ${mx1},${my1} L ${mx1 + mEdgeTx * mTaper + mEdgeNx * tabW},${my1 + mEdgeTy * mTaper + mEdgeNy * tabW} L ${mx2 - mEdgeTx * mTaper + mEdgeNx * tabW},${my2 - mEdgeTy * mTaper + mEdgeNy * tabW} L ${mx2},${my2} Z`;
+				glueShapeParts.push(`<path d="${md1}" ${tabStyle}/>`);
+				foldShapeParts.push(`<path d="M ${mx1},${my1} L ${mx2},${my2}" ${foldStyle}/>`);
 
-			// Tab 2: negative normal direction
-			const md2 = `M ${mx1},${my1} L ${mx1 + mEdgeTx * mTaper - mEdgeNx * tabW},${my1 + mEdgeTy * mTaper - mEdgeNy * tabW} L ${mx2 - mEdgeTx * mTaper - mEdgeNx * tabW},${my2 - mEdgeTy * mTaper - mEdgeNy * tabW} L ${mx2},${my2} Z`;
-			glueShapeParts.push(`<path d="${md2}" ${tabStyle}/>`);
+				// Tab 2: negative normal direction
+				const md2 = `M ${mx1},${my1} L ${mx1 + mEdgeTx * mTaper - mEdgeNx * tabW},${my1 + mEdgeTy * mTaper - mEdgeNy * tabW} L ${mx2 - mEdgeTx * mTaper - mEdgeNx * tabW},${my2 - mEdgeTy * mTaper - mEdgeNy * tabW} L ${mx2},${my2} Z`;
+				glueShapeParts.push(`<path d="${md2}" ${tabStyle}/>`);
+			}
 		}
 	} let parts = [];
 	parts.push(`<g id="GLUE_SIDE">${glueSideParts.join("\n")}</g>`);
@@ -803,7 +735,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	parts.push(`<g id="FOLDING_SHAPE">${foldShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="CUT_LINES"></g>`);
 	parts.push(`<g id="DESIGN"></g>`);
-	parts.push(`<g id="DEBUG">${debugParts.join("\n")}</g>`);
+	parts.push(`<g id="DEBUG">${debugParts ? debugParts.join("\n") : ''}</g>`);
 	parts.push(`<g id="INFO">${info}</g>`);
 
 	// no glue tabs

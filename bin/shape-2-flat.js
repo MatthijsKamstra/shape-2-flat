@@ -20,11 +20,12 @@ async function main() {
 		.option("margin", { alias: "m", type: "number", default: 10, describe: "Margin around content" })
 		.option("unit", { alias: "u", type: "string", default: "mm", describe: "Unit suffix" })
 		.option("output", { alias: "o", type: "string", default: "assets/net.svg", describe: "Output SVG file" })
+		.option("debug", { type: "boolean", default: true, describe: "Include DEBUG group (centers & circles)" })
 		.help()
 		.strict()
 		.parse();
 
-	const { input, path, depth, height, scale, tolerance, minSegment, margin, unit, output } = argv;
+	const { input, path, depth, height, scale, tolerance, minSegment, margin, unit, output, debug } = argv;
 	if (!input && !path) {
 		console.error("Provide --input or --path");
 		process.exit(1);
@@ -45,6 +46,7 @@ async function main() {
 		minSegment,
 		margin,
 		unit,
+		debug,
 	});
 
 	fs.writeFileSync(output, svg, "utf8");

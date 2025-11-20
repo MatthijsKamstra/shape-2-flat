@@ -31,6 +31,7 @@ function generateNet(opts = {}) {
 		minSegment = 0.5,
 		margin = 10,
 		unit = "mm",
+		debug = true,
 	} = opts;
 
 	const info = pathData ? { d: pathData, kind: "path" } : extractPathInfo(svgContent);
@@ -77,6 +78,7 @@ function generateNet(opts = {}) {
 		page: { width: 210, height: 297 },
 		originalShape,
 		scale,
+		debug,
 	});
 	return { svg, meta };
 }

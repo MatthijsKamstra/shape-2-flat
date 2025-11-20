@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node bin/shape-2-flat.js",
     "dev": "node bin/shape-2-flat.js --help",
-    "test": "node test/path-segments.test.mjs && node test/shape-glue-tabs.test.mjs",
+    "test": "node test/path-segments.test.mjs && node test/shape-glue-tabs.test.mjs && node test/geometry.test.mjs",
     "test:segments": "node test/path-segments.test.mjs",
     "test:tabs": "node test/shape-glue-tabs.test.mjs",
     "test:quick": "node test/quick-test.mjs"
