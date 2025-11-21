@@ -82,7 +82,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const contentWidth = page?.width ?? (Math.max(baseBox.maxX, sy + totalStripH, mirrorBox.maxX) + margin);
 	const contentHeight = page?.height ?? (Math.max(baseBox.maxY, sy + totalStripH, mirrorBox.maxY) + margin);
 
-	const baseStyle = 'fill="#e5e5e5" stroke="#000" stroke-width="0.6"';
+	const baseStyle = 'fill="#e6f2ff" stroke="#000" stroke-width="0.6"';
 	const mirrorStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const extrudeStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const tabStyle = 'fill="#e5e5e5"';
