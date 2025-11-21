@@ -1,6 +1,6 @@
 # shape-2-flat
 
-Convert an SVG path or primitive into a printable A4 SVG net (unfolded layout) of an extruded prism. Base/mirror use light gray fill (#e5e5e5); sides & tabs are white; stroke width is 0.6 (black). Output groups now include SHAPE, GLUE_SIDE, GLUE_SHAPE, FOLDING_SIDE, FOLDING_SHAPE, DESIGN, INFO, DEBUG, CUT_LINES (placeholder), and BG.
+Convert an SVG path or primitive into a printable A4 SVG net (unfolded layout) of an extruded prism. Base/mirror use light gray fill (#e5e5e5); sides & tabs are white; stroke width is 0.6 (black). Output groups now include SHAPE, GLUE_SIDE, GLUE_SHAPE, FOLDING_SIDE, FOLDING_SHAPE, DESIGN, INFO, DEBUG, CUT_LINES (placeholder), BG, and COLOFON.
 
 ## What it does
 
@@ -14,6 +14,7 @@ Convert an SVG path or primitive into a printable A4 SVG net (unfolded layout) o
   - GLUE_SHAPE / FOLDING_SHAPE: base & mirror edge tabs (excluding attachment edge)
   - INFO: perimeter + edge diagnostics (type, length, angle)
   - DEBUG: fitted circles/ellipses for arc & curve segments
+  - COLOFON: swatches of the color palette used in the export
   - DESIGN: user overlays (placeholder)
   - CUT_LINES: future die line output (placeholder)
   - BG: full-page white rectangle

@@ -32,6 +32,7 @@
   - `DESIGN`: User artwork placeholder
   - `INFO`: Diagnostics: total perimeter, per-segment length/angle/type
   - `DEBUG`: Fitted circles/ellipses for arc & curve segments (base red/orange, mirror blue/cyan) + center markers
+  - `COLOFON`: Color swatches for the palette used in the output (stroke matches fill, stroke-width 0.6)
   - `BG`: Page background (white rect)
 
 ## Styles

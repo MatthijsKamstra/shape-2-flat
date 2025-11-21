@@ -32,6 +32,7 @@
   - Fold lines: white dashed `stroke-dasharray="2,1"`; star tabs fold at alternate inner vertices only
   - Tabs: white fill, black stroke; excluded from centering
 - `INFO` group: perimeter + per-segment diagnostics (type/length/angle); hidden with `style="display:none"` when `--debug` false
+- `COLOFON`: color palette swatches (stroke matches fill, stroke-width 0.6); positioned near bottom-left margin.
 - `BG`: full-page white rect; `CUT_LINES` & `DESIGN` placeholders; `DEBUG`: fitted circles (base red/orange, mirror blue/cyan) + center markers; hidden with `style="display:none"` when `--debug` false.
 
 ## CLI & Workflows

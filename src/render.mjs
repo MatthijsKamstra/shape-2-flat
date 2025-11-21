@@ -86,6 +86,12 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const mirrorStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const extrudeStyle = 'fill="white" stroke="#000" stroke-width="0.6"';
 	const tabStyle = 'fill="#e5e5e5"';
+	const colofonColors = [
+		{ color: '#e6f2ff' },
+		{ color: '#e5e5e5' },
+		{ color: '#ffffff' },
+		{ color: '#000000' }
+	];
 
 	// Center the whole group within the page bounds (if page provided) or content size
 	// Compute group bbox
@@ -447,6 +453,18 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 
 	const info = infoLines.join('\n');
 
+	// Position colofon swatches near bottom-left margin
+	const chipSize = 8;
+	const chipGap = 4;
+	const colofonHeight = colofonColors.length ? (colofonColors.length * chipSize) + ((colofonColors.length - 1) * chipGap) : 0;
+	const colofonX = margin;
+	const colofonY = (page?.height ?? contentHeight) - margin - colofonHeight;
+	const colofonParts = colofonColors.map((entry, idx) => {
+		const y = idx * (chipSize + chipGap);
+		return `<rect x="0" y="${y}" width="${chipSize}" height="${chipSize}" fill="${entry.color}" stroke="${entry.color}" stroke-width="0.6"/>`;
+	});
+	const colofonGroup = `<g id="COLOFON" transform="translate(${colofonX},${colofonY})">${colofonParts.join("\n")}</g>`;
+
 	// Generate star-pattern glue tabs for arc/curve segments (debug optional)
 	// (debugParts initialized earlier before shapeParts)
 
@@ -752,6 +770,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	parts.push(`<g id="FOLDING_SHAPE">${foldShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="CUT_LINES"></g>`);
 	parts.push(`<g id="DESIGN"></g>`);
+	parts.push(colofonGroup);
 	const debugStyle = debug ? '' : ' style="display:none"';
 	parts.push(`<g id="DEBUG"${debugStyle}>${debugParts.join("\n")}</g>`);
 	parts.push(`<g id="INFO"${debugStyle}>${info}</g>`);
