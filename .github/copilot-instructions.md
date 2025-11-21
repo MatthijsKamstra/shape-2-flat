@@ -31,14 +31,14 @@
   - Spike heuristic: `spikes = clamp(12,48, round(perimeter / 8))` (ellipse perimeter via Ramanujan; curves fitted circle; arcs segment length proportion)
   - Fold lines: white dashed `stroke-dasharray="2,1"`; star tabs fold at alternate inner vertices only
   - Tabs: white fill, black stroke; excluded from centering
-- `INFO` group: perimeter + per-segment diagnostics (type/length/angle)
-- `BG`: full-page white rect; `CUT_LINES` & `DESIGN` placeholders; `DEBUG`: fitted circles (base red/orange, mirror blue/cyan) + center markers.
+- `INFO` group: perimeter + per-segment diagnostics (type/length/angle); hidden with `style="display:none"` when `--debug` false
+- `BG`: full-page white rect; `CUT_LINES` & `DESIGN` placeholders; `DEBUG`: fitted circles (base red/orange, mirror blue/cyan) + center markers; hidden with `style="display:none"` when `--debug` false.
 
 ## CLI & Workflows
 
 - Install with `npm install`; run via `npm start` or `node bin/shape-2-flat.js --help`. Package exposes a binary (`npx shape-2-flat`) once published.
 - Required flags: either `--input` or `--path`; optional `--scale` multiplies coordinates before layout, `--tolerance` controls sampling step, `--min-segment` merges small edges, `--margin` sets pre-centering offset.
-- `--debug` emits the `DEBUG` group (fitted arc/curve centers & circles) for visual diagnostics; default off.
+- `--debug` controls visibility of `DEBUG` and `INFO` groups (always generated; hidden via `style="display:none"` when false); default off.
 - CLI dynamically imports ESM core, so stay compatible with Node ≥16 and avoid top-level ESM-only Node APIs in CommonJS entry.
 - Default output is `assets/net.svg`; CLI prints perimeter with `unit` suffix. No automated tests—use sample commands in README for regression checks.
 

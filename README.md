@@ -56,7 +56,7 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 - --margin, -m: Page margin in output (default 10) [some layouts use 0 to connect parts]
 - --output, -o: Output SVG path (default assets/net.svg)
 - --unit, -u: Output dimension unit (px, mm) default mm
-- --debug: Emit DEBUG group (fitted centers/circles for arcs & curves) (default false)
+- --debug: Show DEBUG and INFO groups (default false). Groups are always generated but hidden with `style="display:none"` when false
 
 ## Notes and limitations
 

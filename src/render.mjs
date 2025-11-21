@@ -125,8 +125,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// no tabs
 
 	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
-	// Initialize debug parts early for use in shapeParts
-	const debugParts = debug ? [] : null;
+	// Initialize debug parts early for use in shapeParts (always generate, control visibility via style)
+	const debugParts = [];
 	const shapeParts = [];
 	const useCircle = originalShape && originalShape.kind === 'circle' && originalShape.shapeParams;
 	const useEllipse = originalShape && originalShape.kind === 'ellipse' && originalShape.shapeParams;
@@ -752,8 +752,9 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	parts.push(`<g id="FOLDING_SHAPE">${foldShapeParts.join("\n")}</g>`);
 	parts.push(`<g id="CUT_LINES"></g>`);
 	parts.push(`<g id="DESIGN"></g>`);
-	parts.push(`<g id="DEBUG">${debugParts ? debugParts.join("\n") : ''}</g>`);
-	parts.push(`<g id="INFO">${info}</g>`);
+	const debugStyle = debug ? '' : ' style="display:none"';
+	parts.push(`<g id="DEBUG"${debugStyle}>${debugParts.join("\n")}</g>`);
+	parts.push(`<g id="INFO"${debugStyle}>${info}</g>`);
 
 	// no glue tabs
 
