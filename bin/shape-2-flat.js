@@ -13,19 +13,18 @@ async function main() {
 		.option("input", { alias: "i", type: "string", describe: "Path to an SVG file" })
 		.option("path", { alias: "p", type: "string", describe: "SVG path data string" })
 		.option("depth", { alias: "d", type: "number", default: 50, describe: "Extrusion depth" })
-		.option("height", { type: "number", describe: "[deprecated] Use --depth instead" })
 		.option("scale", { alias: "s", type: "number", default: 1, describe: "Scale factor" })
 		.option("tolerance", { alias: "t", type: "number", default: 0.5, describe: "Curve flatten tolerance" })
 		.option("min-segment", { alias: "ms", type: "number", default: 0.5, describe: "Merge edges shorter than this" })
 		.option("margin", { alias: "m", type: "number", default: 10, describe: "Margin around content" })
 		.option("unit", { alias: "u", type: "string", default: "mm", describe: "Unit suffix" })
 		.option("output", { alias: "o", type: "string", default: "assets/net.svg", describe: "Output SVG file" })
-		.option("debug", { type: "boolean", default: true, describe: "Include DEBUG group (centers & circles)" })
+		.option("debug", { type: "boolean", default: false, describe: "Emit DEBUG group (fitted centers & circles)" })
 		.help()
 		.strict()
 		.parse();
 
-	const { input, path, depth, height, scale, tolerance, minSegment, margin, unit, output, debug } = argv;
+	const { input, path, depth, scale, tolerance, minSegment, margin, unit, output, debug } = argv;
 	if (!input && !path) {
 		console.error("Provide --input or --path");
 		process.exit(1);
@@ -40,7 +39,6 @@ async function main() {
 		svgContent,
 		pathData: path,
 		depth,
-		height,
 		scale,
 		tolerance,
 		minSegment,

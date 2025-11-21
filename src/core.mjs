@@ -13,7 +13,6 @@ import { extractPathInfo } from "./svg-io.mjs";
  * @param {string} [opts.svgContent] - Raw SVG text.
  * @param {string} [opts.pathData]   - Direct path d string.
  * @param {number} [opts.depth=50]
- * @param {number} [opts.height]     - Deprecated alias.
  * @param {number} [opts.scale=1]
  * @param {number} [opts.tolerance=0.5]
  * @param {number} [opts.minSegment=0.5]
@@ -25,13 +24,12 @@ function generateNet(opts = {}) {
 		svgContent,
 		pathData,
 		depth = 50,
-		height,
 		scale = 1,
 		tolerance = 0.5,
 		minSegment = 0.5,
 		margin = 10,
 		unit = "mm",
-		debug = true,
+		debug = false,
 	} = opts;
 
 	const info = pathData ? { d: pathData, kind: "path" } : extractPathInfo(svgContent);
@@ -53,7 +51,7 @@ function generateNet(opts = {}) {
 	if (poly.length < 3) poly = polyRaw;
 	if (poly.length < 3) throw new Error("Path must form a polygon with at least 3 points");
 
-	const depthVal = typeof depth === "number" ? depth : (typeof height === "number" ? height : 50);
+	const depthVal = typeof depth === "number" ? depth : 50;
 
 	let edgeLengths;
 	let hasArcs = false;

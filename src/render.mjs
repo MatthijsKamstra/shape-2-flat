@@ -125,6 +125,8 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	// no tabs
 
 	// Build grouped output: SHAPE (model), GLUE (tabs), DESIGN (placeholder)
+	// Initialize debug parts early for use in shapeParts
+	const debugParts = debug ? [] : null;
 	const shapeParts = [];
 	const useCircle = originalShape && originalShape.kind === 'circle' && originalShape.shapeParams;
 	const useEllipse = originalShape && originalShape.kind === 'ellipse' && originalShape.shapeParams;
@@ -141,12 +143,27 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 			const mirrCx = stackRightX + r;
 			shapeParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="${r}" ${baseStyle}/>`);
 			shapeParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="${r}" ${mirrorStyle}/>`);
+			if (debugParts) {
+				debugParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="${r}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="1" fill="red"/>`);
+				debugParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="${r}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="1" fill="blue"/>`);
+			}
 		} else {
 			const { rx, ry } = originalShape.shapeParams;
 			const baseCx = stackLeftX - rx;
 			const mirrCx = stackRightX + rx;
 			shapeParts.push(`<ellipse cx="${baseCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${baseStyle}/>`);
 			shapeParts.push(`<ellipse cx="${mirrCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" ${mirrorStyle}/>`);
+			if (debugParts) {
+				const avgR = (rx + ry) / 2;
+				debugParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="${avgR}" fill="none" stroke="red" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${baseCx}" cy="${stackMidY}" r="1" fill="red"/>`);
+				debugParts.push(`<ellipse cx="${baseCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" fill="none" stroke="orange" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+				debugParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="${avgR}" fill="none" stroke="blue" stroke-width="0.5" stroke-dasharray="2,1"/>`);
+				debugParts.push(`<circle cx="${mirrCx}" cy="${stackMidY}" r="1" fill="blue"/>`);
+				debugParts.push(`<ellipse cx="${mirrCx}" cy="${stackMidY}" rx="${rx}" ry="${ry}" fill="none" stroke="cyan" stroke-width="0.3" stroke-dasharray="1,1"/>`);
+			}
 		}
 	} else if (useRect && originalShape.shapeParams) {
 		// Render as axis-aligned rects using the rotated polygon bbox
@@ -431,7 +448,7 @@ function renderNetSvg(net, { margin = 10, unit = "px", page, originalShape, scal
 	const info = infoLines.join('\n');
 
 	// Generate star-pattern glue tabs for arc/curve segments (debug optional)
-	const debugParts = debug ? [] : null;
+	// (debugParts initialized earlier before shapeParts)
 
 	// Helper function to generate star pattern tabs at a specific position
 	function addArcStarTabs(cx, cy, rx, ry, numSpikes) {

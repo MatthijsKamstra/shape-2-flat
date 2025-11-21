@@ -57,7 +57,6 @@ node bin/shape-2-flat.js --path "M0,0 L120,0 L120,60 L0,60 Z" --depth 40 --outpu
 - --output, -o: Output SVG path (default assets/net.svg)
 - --unit, -u: Output dimension unit (px, mm) default mm
 - --debug: Emit DEBUG group (fitted centers/circles for arcs & curves) (default false)
-- --height: Deprecated alias for `--depth` (will be removed; prefer `--depth`)
 
 ## Notes and limitations
 
